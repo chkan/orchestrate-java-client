@@ -59,7 +59,7 @@ For more information check out the [Getting Started](https://dashboard.orchestra
 ## <a name="managed-dependency"></a> Managed Dependency
 
 The Orchestrate Java Client is available on
- [Maven Central](http://search.maven.org/#artifactdetails%7Cio.orchestrate%7Corchestrate-java-client%7C0.1.0%7Cbundle).
+ [Maven Central](http://search.maven.org/#artifactdetails%7Cio.orchestrate%7Corchestrate-client%7C0.1.0%7Cbundle).
 
 ### Gradle
 
@@ -112,9 +112,9 @@ The client API is still in _flux_, we're looking for [feedback](/feedback.html)
 
 The javadoc for the latest version of the client is available at:
 
-[http://orchestrate-io.github.io/orchestrate-java-client/javadoc/latest](http://orchestrate-io.github.io/orchestrate-java-client/javadoc/latest)
+[http://java.orchestrate.io/javadoc/latest](http://java.orchestrate.io/javadoc/latest)
 
 For older versions of the documentation:
 
-* [0.1.0](orchestrate-java-client/javadoc/0.1.0/)
+* [0.1.0](javadoc/0.1.0/)
 

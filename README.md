@@ -17,7 +17,7 @@ You can create an account by signing up at the [Dashboard](https://dashboard.orc
 
 ### Getting Started
 
-The client library is available on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22orchestrate-java-client%22).
+The client library is available on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.orchestrate%22%20AND%20a%3A%22orchestrate-client%22).
 
 #### Using [Gradle](http://www.gradle.org/)
 
@@ -48,7 +48,7 @@ The client API is designed around the concept of `operation`s you can execute on
 
 You construct a client using the `API key` for your `Application` which can be
  found in the [Dashboard](https://dashboard.orchestrate.io/) (for help,
- [see here](http://orchestrate-io.github.io/orchestrate-java-client/querying/)).
+ [see here](http://java.orchestrate.io/querying/)).
 
 ```java
 // An API key looks something like:
@@ -79,25 +79,25 @@ if (kvObject == null) {
 }
 ```
 
-The client has operations for [Key-Value](http://orchestrate-io.github.io/orchestrate-java-client/querying/#key-value),
- [Search](http://orchestrate-io.github.io/orchestrate-java-client/querying/#search),
- [Graph](http://orchestrate-io.github.io/orchestrate-java-client/querying/#graph)
- and [Event](http://orchestrate-io.github.io/orchestrate-java-client/querying/#events)
+The client has operations for [Key-Value](http://java.orchestrate.io/querying/#key-value),
+ [Search](http://java.orchestrate.io/querying/#search),
+ [Graph](http://java.orchestrate.io/querying/#graph)
+ and [Event](http://java.orchestrate.io/querying/#events)
  features from the Orchestrate.io service.
 
 #### <a name="user-guide"></a> User Guide
 
-There's a [User Guide](http://orchestrate-io.github.io/orchestrate-java-client/)
+There's a [User Guide](http://java.orchestrate.io/)
  for the `client` with more code examples and details on tuning the library for
  your server environment.
 
 The Javadocs for the codebase are available
- [here](http://orchestrate-io.github.io/orchestrate-java-client/javadoc/latest).
+ [here](http://java.orchestrate.io/javadoc/latest).
 
 #### Note
 
 The client API is still in _flux_, we're looking for
- [feedback](http://orchestrate-io.github.io/orchestrate-java-client/feedback/)
+ [feedback](http://java.orchestrate.io/feedback/)
  from developers and designing what you need to build incredible applications.
 
 ### Developer notes
@@ -147,4 +147,4 @@ All contributions to the documentation and the codebase are very welcome and
  feel free to open issues on the tracker wherever the documentation needs
  improving.
 
-Also, pull requests are always welcome! `:)`
+Lastly, pull requests are always welcome! `:)`

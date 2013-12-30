@@ -431,7 +431,6 @@ public final class Client {
         return future;
     }
 
-    @SuppressWarnings("unchecked")
     private <T> void execute(final HttpContent httpPacket, final OrchestrateFuture<T> future) {
         final Connection<?> connection;
         try {

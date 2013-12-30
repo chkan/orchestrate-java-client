@@ -433,7 +433,7 @@ public final class Client {
 
     @SuppressWarnings("unchecked")
     private <T> void execute(final HttpContent httpPacket, final OrchestrateFuture<T> future) {
-        final Connection connection;
+        final Connection<?> connection;
         try {
             final Future<Connection> connectionFuture = newConnection();
             connection = connectionFuture.get(5, TimeUnit.SECONDS);

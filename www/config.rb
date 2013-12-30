@@ -73,7 +73,7 @@ configure :build do
   # activate :relative_assets
 
   # Or use a different image path
-  set :http_prefix, "/orchestrate-java-client/"
+  # set :http_prefix, "/"
 end
 
 activate :deploy do |deploy|

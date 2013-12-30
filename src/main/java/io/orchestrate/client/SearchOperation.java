@@ -40,6 +40,8 @@ import java.util.List;
  *         .build();
  * }
  * </pre>
+ *
+ * @see <a href="http://java.orchestrate.io/querying/#search">http://java.orchestrate.io/querying/#search</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

@@ -35,6 +35,8 @@ import java.io.IOException;
  *     System.out.println("Successfully stored relationship.");
  * }
  * </pre>
+ *
+ * @see <a href="http://java.orchestrate.io/querying/#store-relation">http://java.orchestrate.io/querying/#store-relation</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

@@ -36,7 +36,7 @@ import java.io.IOException;
  * }
  * </pre>
  *
- * @see <a href="http://orchestrate-io.github.io/orchestrate-java-client/querying/#delete-data">http://orchestrate-io.github.io/orchestrate-java-client/querying/#delete-data</a>
+ * @see <a href="http://java.orchestrate.io/querying/#delete-data">http://java.orchestrate.io/querying/#delete-data</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

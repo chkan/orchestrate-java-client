@@ -23,6 +23,8 @@ import java.util.concurrent.Future;
  * A generic object for CRUD data access operations.
  *
  * @param <T> The type this object will control CRUD operations for.
+ *
+ * @see <a href="http://java.orchestrate.io/examples/#data-access-object">http://java.orchestrate.io/examples/#data-access-object</a>
  */
 public abstract class GenericAsyncDao<T> implements AsyncDao<T> {
 

@@ -19,7 +19,6 @@
  * service.
  *
  * <p>A User Guide for the client can be found at:
- * <a href="http://orchestrate-io.github.io/orchestrate-java-client/">
- * http://orchestrate-io.github.io/orchestrate-java-client/</a>
+ * <a href="http://java.orchestrate.io">http://java.orchestrate.io/</a>
  */
 package io.orchestrate.client;

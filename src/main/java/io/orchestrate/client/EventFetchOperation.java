@@ -43,6 +43,7 @@ import java.util.List;
  * </pre>
  *
  * @param <T> The type to deserialize the result of this operation to.
+ * @see <a href="http://java.orchestrate.io/querying/#fetch-events">http://java.orchestrate.io/querying/#fetch-events</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

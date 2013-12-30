@@ -36,6 +36,8 @@ import java.io.IOException;
  * System.out.println(metadata.getRef());
  * }
  * </pre>
+ *
+ * @see <a href="http://java.orchestrate.io/querying/#store-data">http://java.orchestrate.io/querying/#store-data</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

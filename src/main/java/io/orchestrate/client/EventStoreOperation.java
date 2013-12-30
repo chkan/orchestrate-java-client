@@ -37,6 +37,8 @@ import java.io.IOException;
  *     System.out.println("Successfully stored the event.");
  * }
  * </pre>
+ *
+ * @see <a href="http://java.orchestrate.io/querying/#store-event">http://java.orchestrate.io/querying/#store-event</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

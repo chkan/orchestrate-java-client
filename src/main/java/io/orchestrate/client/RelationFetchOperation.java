@@ -41,6 +41,8 @@ import java.util.List;
  *     System.out.println(result.getValue());
  * }
  * </pre>
+ *
+ * @see <a href="http://java.orchestrate.io/querying/#fetch-relations">http://java.orchestrate.io/querying/#fetch-relations</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)

@@ -72,7 +72,7 @@ KvObject<MyObj> kvObject = future.get(3, TimeUnit.SECONDS);
 
 // check the data exists
 if (kvObject == null) {
-    System.out.println("'someKey' does not exist.";
+    System.out.println("'someKey' does not exist.");
 } else {
     MyObj data = kvObject.getValue();
     // do something with the 'data'

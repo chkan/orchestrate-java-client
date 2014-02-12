@@ -152,3 +152,9 @@ All contributions to the documentation and the codebase are very welcome and
  improving.
 
 Lastly, pull requests are always welcome! `:)`
+
+#### Thanks
+
+Many thanks to the following developers for contributing to the client:
+
+* Mårten Gustafson (@chids)

@@ -107,8 +107,12 @@ The client uses the [Grizzly framework](https://grizzly.java.net/) for
  for marshalling data to and from the [Orchestrate.io](http://orchestrate.io/)
  service.
 
-The codebase requires the [Gradle](http://gradle.org) build tool at version
- `1.6+` and the Java compiler at version `1.6.0` or greater.
+The codebase requires...
+
+* [Gradle](http://gradle.org) build tool at version `1.6+` and the Java compiler at version `1.6.0` or greater
+* [Project Lombok](http://projectlombok.org/), so you'll have to install and configure your IDE accordingly
+
+IDE project setup is done with `gradle eclipse` and `gradle idea`, respectively.
 
 #### Building the codebase
 

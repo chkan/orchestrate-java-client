@@ -24,6 +24,8 @@ import org.glassfish.grizzly.http.util.Header;
 import javax.annotation.Nullable;
 import java.io.IOException;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Fetch an object by key from the Orchestrate.io service.
  *
@@ -64,16 +66,12 @@ public final class KvFetchOperation<T> extends AbstractOperation<KvObject<T>> {
      *              runtime.
      */
     public KvFetchOperation(final KvMetadata metadata, final Class<T> clazz) {
-        if (metadata == null) {
-            throw new IllegalArgumentException("'metadata' cannot be null.");
-        }
-        if (clazz == null) {
-            throw new IllegalArgumentException("'clazz' cannot be null.");
-        }
+        checkNotNull(metadata, "metadata");
+
         this.collection = metadata.getCollection();
         this.key = metadata.getKey();
         this.ref = metadata.getRef();
-        this.clazz = clazz;
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /**
@@ -86,22 +84,10 @@ public final class KvFetchOperation<T> extends AbstractOperation<KvObject<T>> {
      *              runtime.
      */
     public KvFetchOperation(final String collection, final String key, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        this.collection = collection;
-        this.key = key;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
         this.ref = null;
-        this.clazz = clazz;
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /**
@@ -133,31 +119,10 @@ public final class KvFetchOperation<T> extends AbstractOperation<KvObject<T>> {
      */
     public KvFetchOperation(
             final String collection, final String key, final String ref, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (ref == null) {
-            throw new IllegalArgumentException("'ref' cannot be null.");
-        }
-        if (ref.length() < 1) {
-            throw new IllegalArgumentException("'ref' cannot be empty.");
-        }
-        if (clazz == null) {
-            throw new IllegalArgumentException("'clazz' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.ref = ref;
-        this.clazz = clazz;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.ref = checkNotNullOrEmpty(ref, "ref");
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /** {@inheritDoc} */

@@ -15,6 +15,7 @@
  */
 package io.orchestrate.client.integration;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.orchestrate.client.*;
 import org.junit.Test;
 
@@ -70,21 +71,40 @@ public final class FetchTest extends OperationTest {
     public void fetchObjectAsPojo()
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString();
-        final MyObject value = new MyObject();
+        final MyEmptyObject value = new MyEmptyObject();
+
+        KvStoreOperation kvStoreOp = new KvStoreOperation(TEST_COLLECTION, key, value);
+        Future<KvMetadata> future_1 = client().execute(kvStoreOp);
+        KvMetadata kvMetadata = future_1.get(3, TimeUnit.SECONDS);
+
+        KvFetchOperation<MyEmptyObject> kvFetchOp = new KvFetchOperation<MyEmptyObject>(TEST_COLLECTION, key, MyEmptyObject.class);
+        KvObject<MyEmptyObject> result = result(kvFetchOp);
+
+        assertNotNull(kvMetadata);
+        assertNotNull(result);
+        assertEquals(key, result.getKey());
+        assertThat(result.getValue(), instanceOf(MyEmptyObject.class));
+        assertEquals(value, result.getValue());
+        assertEquals("{}", result.getRawValue());
+    }
+
+    @Test
+    public void fetchObjectCantDeserialize()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final String key = generateString();
+        final String value = "{\"some_field\": \"Hello World!\"}";
 
         KvStoreOperation kvStoreOp = new KvStoreOperation(TEST_COLLECTION, key, value);
         Future<KvMetadata> future_1 = client().execute(kvStoreOp);
         KvMetadata kvMetadata = future_1.get(3, TimeUnit.SECONDS);
 
         KvFetchOperation<MyObject> kvFetchOp = new KvFetchOperation<MyObject>(TEST_COLLECTION, key, MyObject.class);
-        KvObject<MyObject> result = result(kvFetchOp);
 
-        assertNotNull(kvMetadata);
-        assertNotNull(result);
-        assertEquals(key, result.getKey());
-        assertThat(result.getValue(), instanceOf(MyObject.class));
-        assertEquals(value, result.getValue());
-        assertEquals("{}", result.getRawValue());
+        try {
+            KvObject<MyObject> result = result(kvFetchOp);
+        } catch (final Throwable t) {
+            assertThat(t.getCause(), instanceOf(UnrecognizedPropertyException.class));
+        }
     }
 
     @Test
@@ -98,10 +118,9 @@ public final class FetchTest extends OperationTest {
     }
 
     @Test
-    @org.junit.Ignore("A bug in the Orchestrate.io service.")
     public void fetchObjectNonUrlFriendlyCollection()
             throws InterruptedException, ExecutionException, TimeoutException {
-        final String collection = TEST_COLLECTION + " !";
+        final String collection = TEST_COLLECTION + "/ !";
         final String key = generateString();
         final String value = "{}";
 
@@ -122,7 +141,7 @@ public final class FetchTest extends OperationTest {
     @Test
     public void fetchObjectNonUrlFriendlyKey()
             throws InterruptedException, ExecutionException, TimeoutException {
-        final String key = generateString() + " !";
+        final String key = generateString() + "/ !";
         final String value = "{}";
 
         KvStoreOperation kvStoreOp = new KvStoreOperation(TEST_COLLECTION, key, value);
@@ -176,7 +195,7 @@ public final class FetchTest extends OperationTest {
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString();
         final String value = "{}";
-        final String eventType = generateString() + " !";
+        final String eventType = generateString() + "/ !";
 
         KvStoreOperation kvStoreOp = new KvStoreOperation(TEST_COLLECTION, key, value);
         Future<KvMetadata> future_1 = client().execute(kvStoreOp);
@@ -234,6 +253,30 @@ public final class FetchTest extends OperationTest {
         Iterable<Event<String>> results = result(eventFetchOp);
 
         assertFalse(results.iterator().hasNext());
+    }
+
+    @Test
+    public void listKvObjects()
+            throws InterruptedException, ExecutionException, TimeoutException {
+        final BlockingClient blockingClient = new BlockingClient(client(), 5);
+
+        final String collection = generateString();
+        final KvMetadata kv1 = blockingClient.kvPut(collection, generateString(), "{}");
+        final KvList<MyEmptyObject> results =
+                blockingClient.kvList(collection, 10, MyEmptyObject.class);
+        final Iterator<KvObject<MyEmptyObject>> iter = results.iterator();
+
+        assertNotNull(kv1);
+        assertTrue(iter.hasNext());
+        final KvObject<MyEmptyObject> kv2 = iter.next();
+        assertEquals(kv1.getCollection(), kv2.getCollection());
+        assertEquals(kv1.getKey(), kv2.getKey());
+        assertEquals(kv1.getRef(), kv2.getRef());
+        assertEquals(1, results.getCount());
+        assertNull(results.getNext());
+
+        // cleanup
+        blockingClient.delete(collection);
     }
 
 }

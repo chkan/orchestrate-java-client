@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Fetch events for a key in the Orchestrate.io service.
  *
@@ -74,33 +76,12 @@ public final class EventFetchOperation<T> extends AbstractOperation<Iterable<Eve
      */
     public EventFetchOperation(
             final String collection, final String key, final String type, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("'type' cannot be null.");
-        }
-        if (type.length() < 1) {
-            throw new IllegalArgumentException("'type' cannot be empty.");
-        }
-        if (clazz == null) {
-            throw new IllegalArgumentException("'clazz' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.type = type;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.type = checkNotNullOrEmpty(type, "type");
         this.start = null;
         this.end = null;
-        this.clazz = clazz;
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /**
@@ -117,36 +98,14 @@ public final class EventFetchOperation<T> extends AbstractOperation<Iterable<Eve
      */
     public EventFetchOperation(
             final String collection, final String key, final String type, final long start, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("'type' cannot be null.");
-        }
-        if (type.length() < 1) {
-            throw new IllegalArgumentException("'type' cannot be empty.");
-        }
-        if (start < 0) {
-            throw new IllegalArgumentException("'start' cannot be negative.");
-        }
-        if (clazz == null) {
-            throw new IllegalArgumentException("'clazz' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.type = type;
+        checkArgument(start >= 0, "'start' cannot be negative.");
+
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.type = checkNotNullOrEmpty(type, "type");
         this.start = start;
         this.end = null;
-        this.clazz = clazz;
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /**
@@ -164,39 +123,15 @@ public final class EventFetchOperation<T> extends AbstractOperation<Iterable<Eve
      */
     public EventFetchOperation(
             final String collection, final String key, final String type, final long start, final long end, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("'type' cannot be null.");
-        }
-        if (type.length() < 1) {
-            throw new IllegalArgumentException("'type' cannot be empty.");
-        }
-        if (start < 0) {
-            throw new IllegalArgumentException("'start' cannot be negative.");
-        }
-        if (end < 0) {
-            throw new IllegalArgumentException("'end' cannot be negative.");
-        }
-        if (clazz == null) {
-            throw new IllegalArgumentException("'clazz' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.type = type;
+        checkArgument(start >= 0, "'start' cannot be negative.");
+        checkArgument(end >= 0, "'end' cannot be negative.");
+
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.type = checkNotNullOrEmpty(type, "type");
         this.start = start;
         this.end = end;
-        this.clazz = clazz;
+        this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /** {@inheritDoc} */

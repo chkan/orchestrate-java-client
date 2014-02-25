@@ -27,9 +27,15 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.*;
 
 /**
- * {@link io.orchestrate.client.DeleteOperation}.
+ * {@link io.orchestrate.client.KvDeleteOperation}.
  */
 public final class DeleteTest extends OperationTest {
+
+    private Boolean result(final KvDeleteOperation deleteOp)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        OrchestrateFuture<Boolean> future = client().execute(deleteOp);
+        return future.get(3, TimeUnit.SECONDS);
+    }
 
     private Boolean result(final DeleteOperation deleteOp)
             throws InterruptedException, ExecutionException, TimeoutException {
@@ -59,7 +65,6 @@ public final class DeleteTest extends OperationTest {
     }
 
     @Test
-    @org.junit.Ignore("A bug in the Orchestrate.io service.")
     public void deleteNonUrlFriendlyCollection()
             throws InterruptedException, ExecutionException, TimeoutException {
         final String collection = TEST_COLLECTION + " !";
@@ -79,7 +84,7 @@ public final class DeleteTest extends OperationTest {
         Future<KvMetadata> future_1 = client().execute(kvStoreOp);
         KvMetadata kvMetadata = future_1.get(3, TimeUnit.SECONDS);
 
-        DeleteOperation deleteOp = new DeleteOperation(kvMetadata);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(kvMetadata);
         Boolean result = result(deleteOp);
 
         KvFetchOperation<String> kvFetchOp = new KvFetchOperation<String>(TEST_COLLECTION, key, String.class);
@@ -98,7 +103,7 @@ public final class DeleteTest extends OperationTest {
     public void deleteNotFoundObject()
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString();
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key);
         Boolean result = result(deleteOp);
 
         assertNotNull(result);
@@ -109,7 +114,7 @@ public final class DeleteTest extends OperationTest {
     public void deleteObjectNonUrlFriendlyKey()
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString() + " !";
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key);
         Boolean result = result(deleteOp);
 
         assertNotNull(result);
@@ -124,7 +129,7 @@ public final class DeleteTest extends OperationTest {
         Future<KvMetadata> future = client().execute(kvStoreOp);
         KvMetadata kvMetadata = future.get(3, TimeUnit.SECONDS);
 
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key, kvMetadata);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key, kvMetadata);
         Boolean result = result(deleteOp);
 
         assertNotNull(kvMetadata);
@@ -138,7 +143,7 @@ public final class DeleteTest extends OperationTest {
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString();
         final String ref = "invalidRef";
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key, ref);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key, ref);
 
         Throwable t = null;
         try {
@@ -161,7 +166,7 @@ public final class DeleteTest extends OperationTest {
         KvMetadata kvMetadata = future_1.get(3, TimeUnit.SECONDS);
 
         final String ref = "0208f332c68016df";
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key, ref);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key, ref);
         Boolean result = result(deleteOp);
 
         KvFetchOperation<String> kvFetchOp = new KvFetchOperation<String>(TEST_COLLECTION, key, String.class);
@@ -181,7 +186,7 @@ public final class DeleteTest extends OperationTest {
             throws InterruptedException, ExecutionException, TimeoutException {
         final String key = generateString();
         final String ref = "0208f332c68016df";
-        DeleteOperation deleteOp = new DeleteOperation(TEST_COLLECTION, key, ref);
+        KvDeleteOperation deleteOp = new KvDeleteOperation(TEST_COLLECTION, key, ref);
         Boolean result = result(deleteOp);
 
         assertNotNull(result);

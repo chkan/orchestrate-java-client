@@ -15,13 +15,15 @@
  */
 package io.orchestrate.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import org.glassfish.grizzly.http.HttpHeader;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+
+import static io.orchestrate.client.Preconditions.*;
 
 /**
  * A query operation to the Orchestrate.io service.
@@ -32,10 +34,10 @@ import java.util.List;
 abstract class AbstractOperation<T> {
 
     /** The list of listeners for the operation's future. */
-    private final List<OrchestrateFutureListener<T>> listeners;
+    private final Set<OrchestrateFutureListener<T>> listeners;
 
     AbstractOperation() {
-        listeners = new LinkedList<OrchestrateFutureListener<T>>();
+        listeners = new LinkedHashSet<OrchestrateFutureListener<T>>();
     }
 
     /**
@@ -53,20 +55,33 @@ abstract class AbstractOperation<T> {
             throws IOException;
 
     /**
+     * Add the specified {@code listener} to the future for this operation.
+     *
+     * @param listener The listener to notify when the future for this operation
+     *                 completes.
+     * @return This operation.
+     */
+    public final AbstractOperation<T> addListener(final OrchestrateFutureListener<T> listener) {
+        checkNotNull(listener, "listener");
+        this.listeners.add(listener);
+        return this;
+    }
+
+    /**
      * Adds the specified {@code listeners} to the future for this operation.
      *
      * @param listeners The listeners to notify when the future for this operation
      *                  completes.
      * @see io.orchestrate.client.OrchestrateFuture#addListener(OrchestrateFutureListener)
+     * @return This operation.
      */
-    public final void addListener(final OrchestrateFutureListener<T>... listeners) {
-        if (listeners == null) {
-            throw new IllegalArgumentException("'listeners' cannot be null.");
+    public final AbstractOperation<T> addListener(final Iterable<OrchestrateFutureListener<T>> listeners) {
+        checkNotNull(listeners, "listeners");
+
+        for (final OrchestrateFutureListener<T> listener : listeners) {
+            this.listeners.add(listener);
         }
-        if (listeners.length < 1) {
-            throw new IllegalArgumentException("'listeners' cannot be empty.");
-        }
-        Collections.addAll(this.listeners, listeners);
+        return this;
     }
 
     /**
@@ -74,24 +89,64 @@ abstract class AbstractOperation<T> {
      *
      * @return The list of listeners for this operation's future.
      */
-    public final List<OrchestrateFutureListener<T>> getListeners() {
-        return Collections.unmodifiableList(listeners);
+    public final Set<OrchestrateFutureListener<T>> getListeners() {
+        return Collections.unmodifiableSet(listeners);
     }
 
     /**
-     * Removes the specified {@code listeners} to the future for this operation.
+     * Remove the specified {@code listener} from the future for this operation.
+     *
+     * @param listener The listener to remove from the future for this operation.
+     * @return This operation.
+     */
+    public final AbstractOperation<T> removeListener(final OrchestrateFutureListener<T> listener) {
+        checkNotNull(listener, "listener");
+        this.listeners.remove(listener);
+        return this;
+    }
+
+    /**
+     * Removes the specified {@code listeners} from the future for this operation.
      *
      * @param listeners The listeners to remove from the future for this operation.
      * @see io.orchestrate.client.OrchestrateFuture#removeListener(OrchestrateFutureListener)
+     * @return This operation.
      */
-    public final void removeListener(final OrchestrateFutureListener<T>... listeners) {
-        if (listeners == null) {
-            throw new IllegalArgumentException("'listeners' cannot be null.");
+    public final AbstractOperation<T> removeListener(final Set<OrchestrateFutureListener<T>> listeners) {
+        checkNotNull(listeners, "listeners");
+
+        for (final OrchestrateFutureListener<T> listener : listeners) {
+            this.listeners.remove(listener);
         }
-        if (listeners.length < 1) {
-            throw new IllegalArgumentException("'listeners' cannot be empty.");
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> KvObject<T> jsonToKvObject(
+            final ObjectMapper objectMapper, final JsonNode jsonNode, final Class<T> clazz)
+            throws IOException {
+        // parse the PATH structure (e.g.):
+        // {"collection":"coll","key":"aKey","ref":"someRef"}
+        final JsonNode path = jsonNode.get("path");
+        final String collection = path.get("collection").asText();
+        final String key = path.get("key").asText();
+        final String ref = path.get("ref").asText();
+        final KvMetadata metadata = new KvMetadata(collection, key, ref);
+
+        // parse result structure (e.g.):
+        // {"path":{...},"value":{}}
+        final JsonNode valueNode = jsonNode.get("value");
+        final String rawValue = valueNode.toString();
+
+        final T value;
+        if (clazz == String.class) {
+            // don't deserialize JSON data
+            value = (T) rawValue;
+        } else {
+            value = objectMapper.readValue(rawValue, clazz);
         }
-        Collections.addAll(this.listeners, listeners);
+
+        return new KvObject<T>(metadata, value, rawValue);
     }
 
 }

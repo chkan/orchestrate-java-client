@@ -22,6 +22,8 @@ import org.glassfish.grizzly.http.HttpHeader;
 import javax.annotation.Nullable;
 import java.io.IOException;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Store an event to a key in the Orchestrate.io service.
  *
@@ -67,31 +69,10 @@ public final class EventStoreOperation extends AbstractOperation<Boolean> {
      */
     public EventStoreOperation(
             final String collection, final String key, final String type, final Object value) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("'type' cannot be null.");
-        }
-        if (type.length() < 1) {
-            throw new IllegalArgumentException("'type' cannot be empty.");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("'value' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.type = type;
-        this.value = value;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.type = checkNotNullOrEmpty(type, "type");
+        this.value = checkNotNull(value, "value");
         this.timestamp = null;
     }
 
@@ -108,34 +89,12 @@ public final class EventStoreOperation extends AbstractOperation<Boolean> {
      */
     public EventStoreOperation(
             final String collection, final String key, final String type, final Object value, final long timestamp) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("'type' cannot be null.");
-        }
-        if (type.length() < 1) {
-            throw new IllegalArgumentException("'type' cannot be empty.");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("'value' cannot be null.");
-        }
-        if (timestamp < 0) {
-            throw new IllegalArgumentException("'timestamp' cannot be negative.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.type = type;
-        this.value = value;
+        checkArgument(timestamp >= 0, "'timestamp' cannot be negative.");
+
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.type = checkNotNullOrEmpty(type, "type");
+        this.value = checkNotNull(value, "value");
         this.timestamp = timestamp;
     }
 

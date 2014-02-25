@@ -47,6 +47,8 @@ final class ClientFilter extends BaseFilter {
 
     /** The header value to authenticate with the Orchestrate.io service */
     private final String authHeaderValue;
+    /** The header value to indicate the client and version queried with. */
+    private final String userAgentValue;
     /** The hostname for the Orchestrate.io service. */
     private final String host;
     /** The version of the Orchestrate.io API to use. */
@@ -54,57 +56,66 @@ final class ClientFilter extends BaseFilter {
     /** The mapper to use when deserializing responses from JSON. */
     private final JacksonMapper mapper;
 
-    ClientFilter(final String host, final String apiKey, final String version, final JacksonMapper mapper) {
-        assert (host != null);
-        assert (host.length() > 0);
-        assert (apiKey != null);
-        assert (apiKey.length() > 0);
-        assert (version != null);
-        assert (version.length() > 0);
-        assert (mapper != null);
+    ClientFilter(final ClientBuilder builder) {
+        assert (builder != null);
+
+        assert (builder.getHost() != null);
+        assert (builder.getHost().toString().length() > 0);
+        assert (builder.getApiKey() != null);
+        assert (builder.getApiKey().length() > 0);
+        assert (builder.getVersion() != null);
+        assert (builder.getVersion().name().length() > 0);
+        assert (builder.getMapper() != null);
 
         this.httpResponseAttr =
                 DEFAULT_ATTRIBUTE_BUILDER.createAttribute(HTTP_RESPONSE_ATTR);
         this.authHeaderValue =
-                "Basic ".concat(Base64Utils.encodeToString(apiKey.getBytes(), true));
-        this.host = host;
-        this.version = version;
-        this.mapper = mapper;
+                "Basic ".concat(Base64Utils.encodeToString(builder.getApiKey().getBytes(), true));
+        this.userAgentValue =
+                "Orchestrate Java Client/" + getClass().getPackage().getImplementationVersion();
+        this.host = builder.getHost().toString();
+        this.version = builder.getVersion().name();
+        this.mapper = builder.getMapper();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
-        final HttpContent content = ctx.getMessage();
-        if (!content.isLast()) {
-            return ctx.getStopAction(content);
-        }
-
-        final HttpHeader header = content.getHttpHeader();
-        final HttpStatus status = ((HttpResponsePacket) header).getHttpStatus();
-        final int statusCode = status.getStatusCode();
-
-        log.info("Received content: {}", header);
-        final String contentString = content.getContent().toStringContent();
         final OrchestrateFutureImpl future =
                 httpResponseAttr.get(ctx.getConnection().getAttributes());
+        try {
+            final HttpContent content = ctx.getMessage();
+            if (!content.isLast()) {
+                return ctx.getStopAction(content);
+            }
 
-        switch (statusCode) {
-            case 200:   // intentional fallthrough
-            case 201:   // intentional fallthrough
-            case 204:   // intentional fallthrough
-            case 404:   // intentional fallthrough
-            case 412:
-                final Object result = future.getOperation()
-                        .fromResponse(statusCode, header, contentString, mapper);
-                future.setResult(result);
-                break;
-            default:
-                final String reqId = header.getHeader("x-orchestrate-req-id");
-                future.setException(new RequestException(statusCode, contentString, reqId));
+            final HttpHeader header = content.getHttpHeader();
+            final HttpStatus status = ((HttpResponsePacket) header).getHttpStatus();
+            final int statusCode = status.getStatusCode();
+
+            log.info("Received content: {}", header);
+            final String contentString = content.getContent().toStringContent();
+
+            switch (statusCode) {
+                case 200:   // intentional fallthrough
+                case 201:   // intentional fallthrough
+                case 204:   // intentional fallthrough
+                case 404:   // intentional fallthrough
+                case 412:
+                    final Object result = future.getOperation()
+                            .fromResponse(statusCode, header, contentString, mapper);
+                    future.setResult(result);
+                    break;
+                default:
+                    final String reqId = header.getHeader("x-orchestrate-req-id");
+                    future.setException(new RequestException(statusCode, contentString, reqId));
+            }
+
+            return ctx.getStopAction();
+        } catch (final Throwable t) {
+            future.setException(t);
+            return ctx.getStopAction();
         }
-
-        return ctx.getStopAction();
     }
 
     @Override
@@ -117,8 +128,6 @@ final class ClientFilter extends BaseFilter {
         final HttpPacket request = (HttpPacket) message;
         final HttpRequestPacket httpHeader = (HttpRequestPacket) request.getHttpHeader();
 
-        final UEncoder urlEncoder = new UEncoder();
-        urlEncoder.addSafeCharacter('/');
         final String uriWithPrefix = "/"
                 .concat(version)    // add version information
                 .concat("/")
@@ -126,8 +135,9 @@ final class ClientFilter extends BaseFilter {
 
         // adjust the HTTP request to include standard headers
         httpHeader.setProtocol(Protocol.HTTP_1_1);
+        httpHeader.setHeader(Header.UserAgent, userAgentValue);
         httpHeader.setHeader(Header.Host, host);
-        httpHeader.setRequestURI(urlEncoder.encodeURL(uriWithPrefix));
+        httpHeader.setRequestURI(uriWithPrefix);
 
         // add basic auth information
         httpHeader.addHeader(Header.Authorization, authHeaderValue);
@@ -136,6 +146,16 @@ final class ClientFilter extends BaseFilter {
         ctx.write(request);
 
         return ctx.getStopAction();
+    }
+
+    @Override
+    public void exceptionOccurred(final FilterChainContext ctx, final Throwable ex) {
+        // propagate exceptions to the call-site
+        final OrchestrateFutureImpl future =
+                httpResponseAttr.get(ctx.getConnection().getAttributes());
+        future.setException(ex);
+
+        super.exceptionOccurred(ctx, ex);
     }
 
 }

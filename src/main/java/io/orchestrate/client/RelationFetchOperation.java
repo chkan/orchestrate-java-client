@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Fetch objects related to a key in the Orchestrate.io service.
  *
@@ -67,28 +69,12 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
      */
     public RelationFetchOperation(
             final String collection, final String key, final String... kinds) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (kinds.length < 1) {
-            throw new IllegalArgumentException("'kinds' cannot be empty.");
-        }
+        checkArgument(kinds.length > 0, "'kinds' cannot be empty.");
         for (final String kind : kinds) {
-            if (kind.length() < 1) {
-                throw new IllegalArgumentException("'kinds' cannot contain empty values.");
-            }
+            checkNotNullOrEmpty(kind, "kind");
         }
-        this.collection = collection;
-        this.key = key;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
         this.kinds = kinds;
     }
 
@@ -107,19 +93,7 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
 
         final Iterator<JsonNode> iter = jsonNode.get("results").elements();
         while (iter.hasNext()) {
-            final JsonNode result = iter.next();
-
-            // parse the PATH structure (e.g.):
-            // {"collection":"coll","key":"aKey","ref":"someRef"}
-            final JsonNode path = result.get("path");
-            final String collection = path.get("collection").asText();
-            final String key = path.get("key").asText();
-            final String ref = path.get("ref").asText();
-
-            final KvMetadata metadata = new KvMetadata(collection, key, ref);
-            final String rawValue = result.get("value").toString();
-
-            relatedObjects.add(new KvObject<String>(metadata, rawValue, rawValue));
+            relatedObjects.add(jsonToKvObject(objectMapper, iter.next(), String.class));
         }
 
         return relatedObjects;

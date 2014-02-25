@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Search for data from the Orchestrate.io service.
  *
@@ -113,28 +115,10 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
         while (iter.hasNext()) {
             final JsonNode result = iter.next();
 
-            // parse the PATH structure (e.g.):
-            // {"collection":"coll","key":"aKey","ref":"someRef"}
-            final JsonNode path = result.get("path");
-            final String collection = path.get("collection").asText();
-            final String key = path.get("key").asText();
-            final String ref = path.get("ref").asText();
-            final KvMetadata metadata = new KvMetadata(collection, key, ref);
-
             // parse result structure (e.g.):
             // {"path":{...},"value":{},"score":1.0}
             final double score = result.get("score").asDouble();
-            final JsonNode valueNode = result.get("value");
-            final String rawValue = valueNode.toString();
-
-            final T value;
-            if (builder.clazz == String.class) {
-                // don't deserialize JSON data
-                value = (T) rawValue;
-            } else {
-                value = objectMapper.readValue(rawValue, builder.clazz);
-            }
-            final KvObject<T> kvObject = new KvObject<T>(metadata, value, rawValue);
+            final KvObject<T> kvObject = jsonToKvObject(objectMapper, result, builder.clazz);
 
             results.add(new Result<T>(kvObject, score));
         }
@@ -185,12 +169,8 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
      * @return A new {@code Builder} with default settings.
      */
     public static <T> Builder<T> builder(final String collection, final Class<T> clazz) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
+        checkNotNullOrEmpty(collection, "collection");
+
         return new Builder<T>(collection, clazz);
     }
 
@@ -202,9 +182,8 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
      * @return A new {@code Builder} from the specified operation.
      */
     public static <T> Builder<T> builder(final SearchOperation<T> searchOp) {
-        if (searchOp == null) {
-            throw new IllegalArgumentException("'searchOp' cannot be null.");
-        }
+        checkNotNull(searchOp, "searchOp");
+
         return new Builder<T>(searchOp);
     }
 
@@ -256,12 +235,8 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
          * @return This builder.
          */
         public Builder<T> query(final String luceneQuery) {
-            if (luceneQuery == null) {
-                throw new IllegalArgumentException("'luceneQuery' cannot be null.");
-            }
-            if (luceneQuery.length() < 1) {
-                throw new IllegalArgumentException("'luceneQuery' cannot be empty.");
-            }
+            checkNotNullOrEmpty(luceneQuery, "luceneQuery");
+
             this.query = luceneQuery;
             return this;
         }
@@ -274,9 +249,7 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
          * @return This builder.
          */
         public Builder<T> limit(final int limit) {
-            if (limit < 0) {
-                throw new IllegalArgumentException("'limit' cannot be negative.");
-            }
+            checkArgument(limit >= 0, "'limit' cannot be negative.");
             if (limit > 100) {
                 final String message =
                         "'limit' cannot be greater than 100. " +
@@ -295,9 +268,8 @@ public final class SearchOperation<T> extends AbstractOperation<SearchResults<T>
          * @return This builder.
          */
         public Builder<T> offset(final int offset) {
-            if (offset < 0) {
-                throw new IllegalArgumentException("'offset' cannot be negative.");
-            }
+            checkArgument(offset >= 0, "'offset' cannot be negative.");
+
             this.offset = offset;
             return this;
         }

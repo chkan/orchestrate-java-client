@@ -23,6 +23,8 @@ import org.glassfish.grizzly.http.util.Header;
 import javax.annotation.Nullable;
 import java.io.IOException;
 
+import static io.orchestrate.client.Preconditions.*;
+
 /**
  * Store an object by key to the Orchestrate.io service.
  *
@@ -64,24 +66,9 @@ public final class KvStoreOperation extends AbstractOperation<KvMetadata> {
      */
     public KvStoreOperation(
             final String collection, final String key, final Object value) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("'value' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.value = value;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.value = checkNotNull(value, "value");
         this.currentRef = null;
         this.ifAbsent = false;
     }
@@ -101,24 +88,9 @@ public final class KvStoreOperation extends AbstractOperation<KvMetadata> {
      */
     public KvStoreOperation(
             final String collection, final String key, final Object value, final boolean ifAbsent) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("'value' cannot be null.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.value = value;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.value = checkNotNull(value, "value");
         this.currentRef = null;
         this.ifAbsent = ifAbsent;
     }
@@ -156,31 +128,10 @@ public final class KvStoreOperation extends AbstractOperation<KvMetadata> {
      */
     public KvStoreOperation(
             final String collection, final String key, final Object value, final String currentRef) {
-        if (collection == null) {
-            throw new IllegalArgumentException("'collection' cannot be null.");
-        }
-        if (collection.length() < 1) {
-            throw new IllegalArgumentException("'collection' cannot be empty.");
-        }
-        if (key == null) {
-            throw new IllegalArgumentException("'key' cannot be null.");
-        }
-        if (key.length() < 1) {
-            throw new IllegalArgumentException("'key' cannot be empty.");
-        }
-        if (value == null) {
-            throw new IllegalArgumentException("'value' cannot be null.");
-        }
-        if (currentRef == null) {
-            throw new IllegalArgumentException("'currentRef' cannot be null.");
-        }
-        if (currentRef.length() < 1) {
-            throw new IllegalArgumentException("'currentRef' cannot be empty.");
-        }
-        this.collection = collection;
-        this.key = key;
-        this.value = value;
-        this.currentRef = currentRef;
+        this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.key = checkNotNullOrEmpty(key, "key");
+        this.value = checkNotNull(value, "value");
+        this.currentRef = checkNotNullOrEmpty(currentRef, "currentRef");
         this.ifAbsent = false;
     }
 

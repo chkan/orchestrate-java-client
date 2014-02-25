@@ -24,39 +24,37 @@ import java.io.IOException;
 import static io.orchestrate.client.Preconditions.*;
 
 /**
- * Store a relationship between two objects in the Orchestrate.io service.
+ * Remove a relationship between two objects in the Orchestrate.io service.
  *
  * <p>Usage:
  * <pre>
  * {@code
- * RelationStoreOperation relationStoreOp =
- *         new RelationStoreOperation("oneCollection", "aKey", "relationName", "otherCollection", "otherKey");
+ * RelationPurgeOperation relationPurgeOp =
+ *         new RelationPurgeOperation("oneCollection", "aKey", "relationName", "otherCollection", "otherKey");
  * Future<Boolean> futureResult = client.execute(relationStoreOp);
  * Boolean result = futureResult.get();
  * if (result)
  *     System.out.println("Successfully stored relationship.");
  * }
  * </pre>
- *
- * @see <a href="http://java.orchestrate.io/querying/#store-relation">http://java.orchestrate.io/querying/#store-relation</a>
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)
-public final class RelationStoreOperation extends AbstractOperation<Boolean> {
+public final class RelationPurgeOperation extends AbstractOperation<Boolean> {
 
     /** The collection containing the source key. */
     private final String collection;
-    /** The source key to add the relation to. */
+    /** The source key to remove the relation from. */
     private final String key;
     /** The collection containing the destination key. */
     private final String toCollection;
-    /** The destination key to add the relation to. */
+    /** The destination key to remove the relation from. */
     private final String toKey;
     /** The name of the relationship to create. */
     private final String kind;
 
     /**
-     * Create a new {@code RelationStoreOperation} to define a relationship
+     * Create a new {@code RelationPurgeOperation} to remove a relationship
      * between a {@code key} in a {@code collection} and the specified
      * {@code toKey} in the {@code toCollection}.
      *
@@ -66,7 +64,7 @@ public final class RelationStoreOperation extends AbstractOperation<Boolean> {
      * @param toCollection The collection containing the destination key.
      * @param toKey The destination key to add the relation to.
      */
-    public RelationStoreOperation(
+    public RelationPurgeOperation(
             final String collection, final String key, final String kind, final String toCollection, final String toKey) {
         this.collection = checkNotNullOrEmpty(collection, "collection");
         this.key = checkNotNullOrEmpty(key, "key");
@@ -76,14 +74,14 @@ public final class RelationStoreOperation extends AbstractOperation<Boolean> {
     }
 
     /**
-     * Create a new {@code RelationStoreOperation} to define a relationship
+     * Create a new {@code RelationPurgeOperation} to remove a relationship
      * between an {@code obj} with a {@code kind} to the specified {@code toObj}.
      *
      * @param obj The source object to add the relation to.
      * @param kind The name of the relationship to create.
      * @param toObj The destination object to add the relation to.
      */
-    public RelationStoreOperation(final KvMetadata obj, final String kind, final KvMetadata toObj) {
+    public RelationPurgeOperation(final KvMetadata obj, final String kind, final KvMetadata toObj) {
         this(obj.getCollection(), obj.getKey(), kind, toObj.getCollection(), toObj.getKey());
     }
 

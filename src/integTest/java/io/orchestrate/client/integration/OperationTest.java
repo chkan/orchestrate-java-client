@@ -16,6 +16,7 @@
 package io.orchestrate.client.integration;
 
 import io.orchestrate.client.Client;
+import io.orchestrate.client.ClientBuilder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -27,7 +28,7 @@ import java.io.IOException;
 public abstract class OperationTest {
 
     /** The name of the collection used with all integration tests. */
-    public static final String TEST_COLLECTION = "oio-client-integration-tests";
+    public static final String TEST_COLLECTION = "integration-tests";
 
     /** The client instance to use with requests to the Orchestrate service. */
     private static Client client;
@@ -43,7 +44,7 @@ public abstract class OperationTest {
             throw new IllegalStateException("Cannot run integration tests, 'apiKey' is blank.");
         }
 
-        client = Client.builder(apiKey)
+        client = new ClientBuilder(apiKey)
                 .poolSize(5)
                 .maxPoolSize(Integer.MAX_VALUE)
                 .build();

@@ -18,13 +18,15 @@ package io.orchestrate.client;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static io.orchestrate.client.Preconditions.*;
 
 /**
  * A listenable future based on {@link java.util.concurrent.Future} for an
@@ -74,7 +76,7 @@ final class OrchestrateFutureImpl<T> implements OrchestrateFuture<T> {
         result = null;
         state = State.CREATED;
         listenersLock = new ReentrantLock();
-        listeners = new HashSet<OrchestrateFutureListener<T>>(operation.getListeners());
+        listeners = new LinkedHashSet<OrchestrateFutureListener<T>>(operation.getListeners());
         listenersFired = false;
     }
 
@@ -98,9 +100,7 @@ final class OrchestrateFutureImpl<T> implements OrchestrateFuture<T> {
     /** {@inheritDoc} */
     @Override
     public void addListener(final OrchestrateFutureListener<T> listener) {
-        if (listener == null) {
-            throw new IllegalArgumentException("'listener' cannot be null.");
-        }
+        checkNotNull(listener, "listener");
 
         boolean fireNow = false;
         listenersLock.lock();
@@ -126,9 +126,7 @@ final class OrchestrateFutureImpl<T> implements OrchestrateFuture<T> {
     /** {@inheritDoc} */
     @Override
     public void removeListener(final OrchestrateFutureListener<T> listener) {
-        if (listener == null) {
-            throw new IllegalArgumentException("'listener' cannot be null.");
-        }
+        checkNotNull(listener, "listener");
 
         listenersLock.lock();
         try {

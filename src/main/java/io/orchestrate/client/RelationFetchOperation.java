@@ -94,9 +94,8 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
         final int count = jsonNode.path("count").asInt();
         final List<KvObject<String>> relatedObjects = new ArrayList<KvObject<String>>(count);
 
-        final Iterator<JsonNode> iter = jsonNode.path("results").elements();
-        while (iter.hasNext()) {
-            relatedObjects.add(jsonToKvObject(objectMapper, iter.next(), String.class));
+        for (JsonNode node : jsonNode.path("results")) {
+            relatedObjects.add(jsonToKvObject(objectMapper, node, String.class));
         }
 
         return relatedObjects;

@@ -105,11 +105,12 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
     private static JsonNode parseJson(final String json, final ObjectMapper mapper)
             throws IOException, JsonProcessingException {
         try {
-            return mapper.readTree(json);
+            if(json != null) {
+                return mapper.readTree(json);
+            }
         }
-        catch(JsonMappingException e) {
-            return MissingNode.getInstance();
-        }
+        catch(JsonMappingException invalidJson) { }
+        return MissingNode.getInstance();
     }
 
     /**

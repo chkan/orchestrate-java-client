@@ -15,8 +15,12 @@
  */
 package io.orchestrate.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.MissingNode;
+
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.glassfish.grizzly.http.HttpHeader;
@@ -84,9 +88,8 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
             final int status, final HttpHeader httpHeader, final String json, final JacksonMapper mapper)
             throws IOException {
         assert (status == 200);
-
         final ObjectMapper objectMapper = mapper.getMapper();
-        final JsonNode jsonNode = objectMapper.readTree(json);
+        final JsonNode jsonNode = parseJson(json, objectMapper);
 
         final int count = jsonNode.path("count").asInt();
         final List<KvObject<String>> relatedObjects = new ArrayList<KvObject<String>>(count);
@@ -97,6 +100,16 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
         }
 
         return relatedObjects;
+    }
+
+    private static JsonNode parseJson(final String json, final ObjectMapper mapper)
+            throws IOException, JsonProcessingException {
+        try {
+            return mapper.readTree(json);
+        }
+        catch(JsonMappingException e) {
+            return MissingNode.getInstance();
+        }
     }
 
     /**

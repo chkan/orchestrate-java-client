@@ -354,7 +354,7 @@ public final class HttpClient implements Client {
                     ? "startKey"
                     : "afterKey";
             query = query
-                    .concat(keyName)
+                    .concat('&' + keyName + '=')
                     .concat(urlEncoder.encodeURL(kvListOp.getStartKey()));
         }
 

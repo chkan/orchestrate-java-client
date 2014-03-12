@@ -7,7 +7,7 @@ The information below demonstrates how to make advanced changes to the client.
 ## <a name="tuning"></a> Tuning the Client
 
 As well as the [basic constructor](querying#constructing-a-client) for the
- `Client` it's possible to create a client object using the `Builder`
+ `Client` it's possible to create a client object using the builder
  interface.
 
 The builder allows you to configure settings like the initial size of the
@@ -15,13 +15,13 @@ The builder allows you to configure settings like the initial size of the
  other tuning parameters.
 
 ```java
-Client client = Client.builder("your api key")
+Client client = new ClientBuilder("your api key")
     .poolSize(50)
     .maxPoolSize(100)
     .build();
 ```
 
-You can read more about the `Client.Builder` in the [javadocs](/javadoc/latest/io/orchestrate/client/Client.Builder.html).
+You can read more about the `ClientBuilder` in the [javadocs](/javadoc/latest/io/orchestrate/client/ClientBuilder.html).
 
 ## <a name="json-mapping"></a> Custom JSON Mapping
 
@@ -39,10 +39,10 @@ ObjectMapper mapper = new ObjectMapper();
 mapper.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
 mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-Client client = new Client("your api key", mapper);
+Client client = new ClientBuilder("your api key").mapper(mapper).build();
 
 // OR with greater configuration control
-Client client = Client.builder("your api key")
+Client client = new ClientBuilder("your api key")
     .mapper(JacksonMapper.builder()
         .registerModule(new JodaModule())
         .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)

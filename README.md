@@ -17,13 +17,13 @@ You can create an account by signing up at the [Dashboard](https://dashboard.orc
 
 ### Getting Started
 
-The client library is available on [Maven Central](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22io.orchestrate%22%20AND%20a%3A%22orchestrate-client%22).
+The client library is available on [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22io.orchestrate%22%20AND%20a%3A%22orchestrate-client%22).
 
 #### Using [Gradle](http://www.gradle.org/)
 
 ```groovy
 dependencies {
-    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.1.0'
+    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.2.0'
 }
 ```
 
@@ -33,7 +33,7 @@ dependencies {
 <dependency>
     <groupId>io.orchestrate</groupId>
     <artifactId>orchestrate-client</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -53,12 +53,44 @@ You construct a client using the `API key` for your `Application` which can be
 ```java
 // An API key looks something like:
 //   3854bbd7-0a31-43b0-aa94-66236847a717
-Client client = new Client("your api key");
+Client client = new ClientBuilder("your api key").build();
+// or (for convenience)
+Client client = new HttpClient("your api key");
 ```
 
 #### Fetching Key-Value Data
 
-For example, to fetch an object from a `collection` with a given `key`.
+For example, to fetch an object from a `collection` with a given `key` using
+ the fully asynchronous API:
+
+```java
+KvFetchOperation<MyObj> kvFetchOp =
+    new KvFetchOperation<MyObj>("myCollection", "someKey", MyObj.class);
+kvFetchOp.addListener(new OrchestrateFutureListener<KvObject<MyObj>>() {
+    @Override
+    public void onComplete(OrchestrateFuture<KvObject<MyObj>> future) {
+        try {
+            final KvObject<MyObj> kvObject = future.get();
+            // check the data exists
+            if (kvObject == null) {
+                System.out.println("'someKey' does not exist.");
+            } else {
+                MyObj data = kvObject.getValue();
+                // do something with the 'data'
+            }
+        } catch (Throwable t) {}
+    }
+    @Override
+    public void onException(OrchestrateFuture<KvObject<MyObj>> future) {
+        // handle errors
+    }
+});
+client.execute(kvFetchOp);
+```
+
+(This API will improve significantly in the next release, [see here](https://github.com/orchestrate-io/orchestrate-java-client/issues/13).)
+
+Or, with the blocking API:
 
 ```java
 KvFetchOperation<MyObj> kvFetchOp =

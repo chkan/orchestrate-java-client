@@ -45,7 +45,7 @@ For example, if you were building a social network, you might have a single
 
 When first setting up your application, you will need to create it via the
  [Dashboard](https://dashboard.orchestrate.io/). This creation process will
- generate an API key which the Java client will use to access the data in the
+ generate an API key which the Java client uses to access the data in the
  application. Note that while the `Application` must be created manually, it's
  not necessary to create Collections up front — collections are created
  automatically on the first write.
@@ -59,13 +59,15 @@ For more information check out the [Getting Started](https://dashboard.orchestra
 ## <a name="managed-dependency"></a> Managed Dependency
 
 The Orchestrate Java Client is available on
- [Maven Central](http://search.maven.org/#artifactdetails%7Cio.orchestrate%7Corchestrate-client%7C0.1.0%7Cbundle).
+ [Maven Central](http://search.maven.org/#search|gav|1|g%3A%22io.orchestrate%22%20AND%20a%3A%22orchestrate-client%22).
 
 ### Gradle
 
 ```groovy
 dependencies {
-compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.1.0'
+    compile(
+[group: 'io.orchestrate', name: 'orchestrate-client', version: '0.2.0']
+    )
 }
 ```
 
@@ -75,7 +77,7 @@ compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.1.0'
 <dependency>
     <groupId>io.orchestrate</groupId>
     <artifactId>orchestrate-client</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
@@ -116,4 +118,5 @@ The javadoc for the latest version of the client is available at:
 
 For older versions of the documentation:
 
+* [0.2.0](http://java.orchestrate.io/javadoc/0.2.0/)
 * [0.1.0](http://java.orchestrate.io/javadoc/0.1.0/)

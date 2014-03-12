@@ -38,8 +38,8 @@ import static io.orchestrate.client.Preconditions.*;
  * {@code
  * KvListOperation<MyObject> kvListOp =
  *         new KvListOperation<MyObject>("myCollection", 20, MyObject.class);
- * Future<Iterable<KvObject<MyObject>>> futureResult = client.execute(kvFetchOp);
- * Iterable<KvObject<MyObject>> results = futureResult.get();
+ * Future<KvList<<MyObject>>> futureResult = client.execute(kvFetchOp);
+ * KvList<MyObject> results = futureResult.get();
  * for (KvObject<MyObject> kvObject : results)
  *     System.out.println(kvObject.getValue());
  * }

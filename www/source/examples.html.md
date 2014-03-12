@@ -5,6 +5,37 @@ There are a very large number of libraries and frameworks in the Java ecosystem,
 The examples below demonstrate how to integrate the Java client into a few of
  these patterns and frameworks.
 
+## <a name="listenable-future"></a> Listenable Future
+
+As well as using the `j.u.c.Future` to block when receiving the result of a
+ request to the Orchestrate service it's possible to use the client in a fully
+ non-blocking way (i.e. "callback-style").
+
+```java
+final Client client = new HttpClient("your api key");
+final KvStoreOperation kvStoreOp =
+        new KvStoreOperation("collection", "key", new MyObj());
+kvStoreOp.addListener(new OrchestrateFutureListener<KvMetadata>() {
+    @Override
+    public void onComplete(final OrchestrateFuture<KvMetadata> future) {
+        try {
+            final KvMetadata kvMetadata = future.get();
+        } catch(final Throwable ignored) {}
+    }
+    @Override
+    public void onException(final OrchestrateFuture<KvMetadata> future) {
+        // handle error condition
+    }
+});
+client.execute(kvStoreOp);
+```
+
+#### Note
+
+In the example above, it's still necessary to catch the checked exception
+ even though it will never be thrown in the `onComplete` method. This will be
+ improved in the next release.
+
 ## <a name="data-access-object"></a> Data Access Object (DAO) Pattern
 
 A [Data Access Object](http://en.wikipedia.org/wiki/Data_access_object) is an

@@ -25,7 +25,7 @@ You construct a client using the `API key` for your `Application` which can be
 ```java
 // An API key looks something like:
 //   3854bbd7-0a31-43b0-aa94-66236847a717
-Client client = new Client("your api key");
+Client client = new ClientBuilder("your api key").build();
 ```
 
 A `Client` can be shared across threads and you only need to construct one per
@@ -82,6 +82,33 @@ This example shows how to retrieve the value for a key from a collection and
  deserialize the result JSON to a [POJO](http://en.wikipedia.org/wiki/Plain_Old_Java_Object)
  called `MyObj`.
 
+### <a name="list-data"></a> List Data
+
+To list objects in a `collection`.
+
+```java
+KvListOperation<MyObj> kvListOp =
+        new KvListOperation<MyObj>("myCollection", MyObj.class);
+
+// execute the operation
+Future<KvList<MyObj>> kvListFuture = client.execute(kvListOp);
+
+// wait for the result
+KvList<MyObj> results = kvListFuture.get(3, TimeUnit.SECONDS);
+
+for (KvObject<MyObj> kvObject : results) {
+    // do something with the object
+    System.out.println(kvObject);
+}
+```
+
+By default, only the first 10 objects are retrieved. This can be increased up to
+ 100 per request in the `KvListOperation` constructor.
+
+The `KvList` object returns a `next` field with the URL of the next group of
+ objects (or `null` if there are no more objects), this can be used to paginate
+ through the collection.
+
 ### <a name="store-data"></a> Store Data
 
 To store an object from a `collection` to a given `key`.
@@ -94,10 +121,10 @@ KvStoreOperation kvStoreOp =
     new KvStoreOperation("myCollection", "someKey", myObj);
 
 // execute the operation
-Future<KvMetadata> kvOpFuture = client.execute(kvStoreOp);
+Future<KvMetadata> kvFuture = client.execute(kvStoreOp);
 
 // wait for the result
-KvMetadata kvMetadata = kvOpFuture.get(3, TimeUnit.SECONDS);
+KvMetadata kvMetadata = kvFuture.get(3, TimeUnit.SECONDS);
 
 // print the 'ref' for the stored data
 System.out.println(kvMetadata.getRef());
@@ -133,11 +160,27 @@ This type of store operation is very useful in high write concurrency
 
 ### <a name="delete-data"></a> Delete Data
 
-To delete an object by `key` or the `collection` of objects.
+To delete a `collection` of objects.
 
 ```java
-DeleteOperation deleteOp =
-        new DeleteOperation("myCollection", "someKey");
+DeleteOperation deleteOp = new DeleteOperation("myCollection");
+
+// execute the operation
+Future<Boolean> deleteFuture = client.execute(deleteOp);
+
+// wait for the result
+Boolean deleted = deleteFuture.get(3, TimeUnit.SECONDS);
+
+if (deleted) {
+    System.out.println("Successfully deleted the collection.");
+}
+```
+
+To delete an object by `key` in a `collection`.
+
+```java
+KvDeleteOperation kvDeleteOp =
+        new KvDeleteOperation("myCollection", "someKey");
 
 // execute the operation
 Future<Boolean> deleteFuture = client.execute(deleteOp);
@@ -150,13 +193,6 @@ if (deleted) {
 }
 ```
 
-```java
-// delete an entire collection, by careful, this cannot be undone
-DeleteOperation deleteOp = new DeleteOperation("myCollection");
-
-// same as above
-```
-
 #### <a name="conditional-delete"></a> Conditional Delete
 
 Similar to a [conditional store](#conditional-store) operation, a conditional
@@ -165,14 +201,34 @@ Similar to a [conditional store](#conditional-store) operation, a conditional
 
 ```java
 String currentRef = kvMetadata.getRef();
-DeleteOperation deleteOp =
-    new DeleteOperation("myCollection", "someKey", currentRef);
+KvDeleteOperation kvDeleteOp =
+    new KvDeleteOperation("myCollection", "someKey", currentRef);
 
 // same as above
 ```
 
 The object with the key `someKey` will be deleted if and only if the
  `currentRef` matches the current ref for the object on the server.
+
+#### <a name="purge-kv-data"></a> Purge Data
+
+The Orchestrate service is built on the principle that all data is immutable,
+ every change made to an object is stored as a new object with a different "ref".
+ This "ref history" is maintained even after an object has been deleted, it makes
+ it possible to recover deleted objects easily and rollback to an earlier version
+ of the object.
+
+Nevertheless there will be times when you may need to delete an object and purge
+ all "ref history" for the object.
+
+```java
+KvPurgeOperation kvPurgeOp = new KvPurgeOperation("myCollection", "someKey");
+Future<Boolean> purgeFuture = client.execute(kvPurgeOp);
+Boolean purged = purgeFuture.get(3, TimeUnit.SECONDS);
+if (purged) {
+    System.out.println("Successfully purged the key.");
+}
+```
 
 ## <a name="search"></a> Search
 
@@ -402,5 +458,34 @@ Boolean stored = relationStoreFuture.get(3, TimeUnit.SECONDS);
 
 if (stored) {
     System.out.println("Successfully stored the relation.");
+}
+```
+
+#### Note
+
+Relationships in Orchestrate are uni-directional, to define a bi-directional
+ relation you must swap the `collection` <-> `toCollection` and `key` <-> `toKey`
+ parameters.
+
+We may lift this restriction in a future release of the client.
+
+### <a name="purge-relation"></a> Purge Relation
+
+To purge a `relation` between one `key` to another `key` within the same
+ `collection` or across different `collection`s.
+
+```java
+RelationPurgeOperation relationPurgeOp =
+    new RelationPurgeOperation(
+    "myCollection", "someKey", "relation", "toCollection", "toSomeKey");
+
+// execute the operation
+Future<Boolean> relationPurgeFuture = client.execute(relationPurgeOp);
+
+// wait for the result
+Boolean purged = relationPurgeFuture.get(3, TimeUnit.SECONDS);
+
+if (purged) {
+    System.out.println("Successfully purged the relation.");
 }
 ```

@@ -190,3 +190,4 @@ Lastly, pull requests are always welcome! `:)`
 Many thanks to the following developers for contributing to the client:
 
 * Mårten Gustafson (@chids)
+* Henric Englund (@hnrc)

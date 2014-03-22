@@ -17,6 +17,7 @@ package io.orchestrate.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.EqualsAndHashCode;
 import org.glassfish.grizzly.http.HttpHeader;
 
@@ -136,14 +137,16 @@ abstract class AbstractOperation<T> {
         // parse result structure (e.g.):
         // {"path":{...},"value":{}}
         final JsonNode valueNode = jsonNode.get("value");
-        final String rawValue = valueNode.toString();
+
+        //TODO Can this be removed? Is there value in always having the raw string value available on the KvObject?
+        final String rawValue = objectMapper.writeValueAsString(valueNode);
 
         final T value;
         if (clazz == String.class) {
             // don't deserialize JSON data
             value = (T) rawValue;
         } else {
-            value = objectMapper.readValue(rawValue, clazz);
+            value = valueNode.traverse(objectMapper).readValueAs(clazz);
         }
 
         return new KvObject<T>(metadata, value, rawValue);

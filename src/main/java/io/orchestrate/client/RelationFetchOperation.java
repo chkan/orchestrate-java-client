@@ -39,8 +39,8 @@ import static io.orchestrate.client.Preconditions.*;
  * <p>Usage:
  * <pre>
  * {@code
- * RelationFetchOperation relationFetchOp =
- *         new RelationFetchOperation("myCollection", "someKey", "relationName");
+ * RelationFetchOperation<String> relationFetchOp =
+ *         new RelationFetchOperation<String>("myCollection", "someKey", String.class, "relationName");
  * Future<Iterable<KvObject<String>>> futureResult = client.execute(relationFetchOp);
  * Iterable<KvObject<String>> results = futureResult.get();
  * for (KvObject<String> result : results)
@@ -52,7 +52,7 @@ import static io.orchestrate.client.Preconditions.*;
  */
 @ToString(callSuper=false)
 @EqualsAndHashCode(callSuper=false)
-public final class RelationFetchOperation extends AbstractOperation<Iterable<KvObject<String>>> {
+public final class RelationFetchOperation<T> extends AbstractOperation<Iterable<KvObject<T>>> {
 
     /** The collection containing the key. */
     private final String collection;
@@ -60,6 +60,7 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
     private final String key;
     /** The kinds to traverse in the query. */
     private final String[] kinds;
+    private Class<T> clazz;
 
     /**
      * Create a new {@code RelationFetchOperation} to get all objects that have
@@ -68,11 +69,14 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
      *
      * @param collection The collection containing the key.
      * @param key The key to fetch related objects from.
+     * @param clazz Type information for deserializing to type {@code T} at
+     *              runtime.
      * @param kinds The name of the relationships to traverse to the related
      *                  objects.
      */
     public RelationFetchOperation(
-            final String collection, final String key, final String... kinds) {
+            final String collection, final String key, Class<T> clazz, final String... kinds) {
+        this.clazz = clazz;
         checkArgument(kinds.length > 0, "'kinds' cannot be empty.");
         for (final String kind : kinds) {
             checkNotNullOrEmpty(kind, "kind");
@@ -84,7 +88,7 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
 
     /** {@inheritDoc} */
     @Override
-    Iterable<KvObject<String>> fromResponse(
+    Iterable<KvObject<T>> fromResponse(
             final int status, final HttpHeader httpHeader, final String json, final JacksonMapper mapper)
             throws IOException {
         assert (status == 200);
@@ -92,10 +96,10 @@ public final class RelationFetchOperation extends AbstractOperation<Iterable<KvO
         final JsonNode jsonNode = parseJson(json, objectMapper);
 
         final int count = jsonNode.path("count").asInt();
-        final List<KvObject<String>> relatedObjects = new ArrayList<KvObject<String>>(count);
+        final List<KvObject<T>> relatedObjects = new ArrayList<KvObject<T>>(count);
 
         for (JsonNode node : jsonNode.path("results")) {
-            relatedObjects.add(jsonToKvObject(objectMapper, node, String.class));
+            relatedObjects.add(jsonToKvObject(objectMapper, node, clazz));
         }
 
         return relatedObjects;

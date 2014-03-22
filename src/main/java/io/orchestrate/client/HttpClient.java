@@ -420,12 +420,12 @@ public final class HttpClient implements Client {
 
     /** {@inheritDoc} */
     @Override
-    public OrchestrateFuture<Iterable<KvObject<String>>> execute(
-            final RelationFetchOperation relationFetchOp) {
+    public <T> OrchestrateFuture<Iterable<KvObject<T>>> execute(
+            final RelationFetchOperation<T> relationFetchOp) {
         checkNotNull(relationFetchOp, "relationFetchOp");
 
-        final OrchestrateFuture<Iterable<KvObject<String>>> future =
-                new OrchestrateFutureImpl<Iterable<KvObject<String>>>(relationFetchOp);
+        final OrchestrateFuture<Iterable<KvObject<T>>> future =
+                new OrchestrateFutureImpl<Iterable<KvObject<T>>>(relationFetchOp);
 
         final UEncoder urlEncoder = new UEncoder();
         String uri = urlEncoder.encodeURL(relationFetchOp.getCollection())

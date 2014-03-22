@@ -54,8 +54,8 @@ public final class PurgeTest extends OperationTest {
 
     private Iterable<KvObject<String>> fetchRelation(final KvMetadata source, final String kind)
             throws InterruptedException, ExecutionException, TimeoutException {
-        final RelationFetchOperation relationFetchOp =
-                new RelationFetchOperation(source.getCollection(), source.getKey(), kind);
+        final RelationFetchOperation<String> relationFetchOp =
+                new RelationFetchOperation<String>(source.getCollection(), source.getKey(), String.class, kind);
         return client().execute(relationFetchOp).get(3, TimeUnit.SECONDS);
     }
 

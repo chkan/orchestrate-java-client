@@ -61,6 +61,8 @@ public final class ClientBuilder {
     private JacksonMapper mapper;
     /** Whether to use SSL with the connection. */
     private boolean useSSL;
+    /** Value to append to the User-Agent sent to Orchestrate. */
+    private String userAgent;
 
     public ClientBuilder(final String apiKey) {
         if (apiKey == null) {
@@ -213,6 +215,19 @@ public final class ClientBuilder {
      */
     public ClientBuilder useSSL(final boolean useSSL) {
         this.useSSL = useSSL;
+        return this;
+    }
+
+    /**
+     * Set a custom value to be appended to the User-Agent header being sent to Orchestrate. This is useful for
+     * custom client implementations or libraries that build on top of the Orchestrate client to help identify usage
+     * of those implementations and libraries.
+     *
+     * @param userAgent Value that should be sent along with the User-Agent request header.
+     * @return This builder.
+     */
+    public ClientBuilder userAgent(final String userAgent) {
+        this.userAgent = userAgent;
         return this;
     }
 

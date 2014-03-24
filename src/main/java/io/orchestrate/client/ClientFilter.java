@@ -26,9 +26,9 @@ import org.glassfish.grizzly.http.*;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import java.io.IOException;
+import java.util.Properties;
 
 import static org.glassfish.grizzly.attributes.DefaultAttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
 
@@ -56,6 +56,8 @@ final class ClientFilter extends BaseFilter {
     /** The mapper to use when deserializing responses from JSON. */
     private final JacksonMapper mapper;
 
+    private static final String BASE_USER_AGENT = buildBaseUserAgent();
+
     ClientFilter(final ClientBuilder builder) {
         assert (builder != null);
 
@@ -71,8 +73,9 @@ final class ClientFilter extends BaseFilter {
                 DEFAULT_ATTRIBUTE_BUILDER.createAttribute(HTTP_RESPONSE_ATTR);
         this.authHeaderValue =
                 "Basic ".concat(Base64Utils.encodeToString(builder.getApiKey().getBytes(), true));
-        this.userAgentValue =
-                "Orchestrate Java Client/" + getClass().getPackage().getImplementationVersion();
+        this.userAgentValue = builder.getUserAgent() == null ? BASE_USER_AGENT :
+                BASE_USER_AGENT + " " + builder.getUserAgent();
+
         this.host = builder.getHost().toString();
         this.version = builder.getVersion().name();
         this.mapper = builder.getMapper();
@@ -158,4 +161,18 @@ final class ClientFilter extends BaseFilter {
         super.exceptionOccurred(ctx, ex);
     }
 
+    private static String buildBaseUserAgent() {
+        String version = "unknown";
+        try {
+            Properties props = new Properties();
+            String basePath = "/" + ClientFilter.class.getPackage().getName().replace('.', '/');
+            props.load(ClientFilter.class.getResourceAsStream(basePath + "/build.properties"));
+            if (props.containsKey("version")) {
+                version = props.getProperty("version");
+            }
+        } catch (Exception ex) {
+        }
+        return String.format("OrchestrateJavaClient/%s (Java/%s; %s)",
+                version, System.getProperty("java.version"), System.getProperty("java.vendor"));
+    }
 }

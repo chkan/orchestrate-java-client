@@ -108,6 +108,10 @@ jar {
     }
 }
 
+processResources {
+    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [version: project.version])
+}
+
 javadoc {
     classpath += configurations.provided
 }

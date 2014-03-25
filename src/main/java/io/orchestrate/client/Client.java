@@ -106,7 +106,7 @@ public interface Client {
      * @param relationFetchOp The relation fetch operation to execute.
      * @return The future for the response from this operation.
      */
-    public OrchestrateFuture<Iterable<KvObject<String>>> execute(final RelationFetchOperation relationFetchOp);
+    public <T> OrchestrateFuture<Iterable<KvObject<T>>> execute(final RelationFetchOperation<T> relationFetchOp);
 
     /**
      * Executes the specified {@code relationStoreOp} on the Orchestrate.io

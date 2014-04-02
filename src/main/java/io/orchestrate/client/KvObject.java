@@ -23,7 +23,7 @@ import lombok.ToString;
  *
  * @param <T> The deserializable type for the value of this KV object.
  */
-@ToString
+@ToString(callSuper=true)
 @EqualsAndHashCode(callSuper=true)
 public class KvObject<T> extends KvMetadata {
 

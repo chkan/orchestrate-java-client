@@ -162,6 +162,10 @@ public class OrchestrateClient implements NewClient {
     /** {@inheritDoc} */
     @Override
     public OrchestrateRequest<Boolean> delete(final @NonNull String collection) {
+        if (collection.length() < 1) {
+            throw new IllegalArgumentException("'collection' cannot be empty.");
+        }
+
         final UEncoder urlEncoder = new UEncoder();
         final String uri = urlEncoder.encodeURL(collection);
 

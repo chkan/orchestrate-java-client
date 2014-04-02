@@ -15,22 +15,29 @@
  */
 package io.orchestrate.client.itest;
 
+import com.pholser.junit.quickcheck.ForAll;
 import io.orchestrate.client.NewClient;
 import io.orchestrate.client.OrchestrateClient;
 import io.orchestrate.client.ResponseAdapter;
 import org.glassfish.grizzly.utils.DataStructures;
 import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.contrib.theories.Theories;
+import org.junit.contrib.theories.Theory;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.isEmptyString;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 /**
  * {@link io.orchestrate.client.OrchestrateClient#delete(String)}.
  */
+@RunWith(Theories.class)
 public final class CollectionTest {
 
     /** The client to run tests on. */
@@ -42,16 +49,21 @@ public final class CollectionTest {
         client = OrchestrateClient.builder(apiKey).build();
     }
 
-    @Test
-    public void deleteCollection() {
-        final boolean result = client.delete("collection").execute();
+    @Theory
+    public void deleteCollection(@ForAll(sampleSize=10) final String collection) {
+        assumeThat(collection, not(isEmptyString()));
+
+        final boolean result = client.delete(collection).execute();
         assertTrue(result);
     }
 
-    @Test
-    public void deleteCollectionAsync() throws InterruptedException {
+    @Theory
+    public void deleteCollectionAsync(@ForAll(sampleSize=10) final String collection)
+            throws InterruptedException {
+        assumeThat(collection, not(isEmptyString()));
+
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
-        client.delete("collection")
+        client.delete(collection)
               .on(new ResponseAdapter<Boolean>() {
                   @Override
                   public void onSuccess(final Boolean object) {

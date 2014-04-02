@@ -195,6 +195,16 @@ public class OrchestrateClient implements Client {
 
     /** {@inheritDoc} */
     @Override
+    public ListResource list(final @NonNull String collection) {
+        if (collection.length() < 1) {
+            throw new IllegalArgumentException("'collection' cannot be empty.");
+        }
+
+        return new ListResource(this, builder.mapper, collection);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void ping() throws IOException {
         // TODO
         throw new UnsupportedOperationException("Not yet implemented.");
@@ -202,6 +212,10 @@ public class OrchestrateClient implements Client {
 
     // TODO
     public static Builder builder(final @NonNull String apiKey) {
+        if (apiKey.length() < 1) {
+            throw new IllegalArgumentException("'apiKey' cannot be empty.");
+        }
+
         return new Builder(apiKey);
     }
 

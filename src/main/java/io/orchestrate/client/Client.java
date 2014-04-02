@@ -15,6 +15,9 @@ public interface Client {
     public KvResource kv(final String collection, final String key);
 
     // TODO
+    public ListResource list(final String collection);
+
+    // TODO
     public void ping() throws IOException;
 
 }

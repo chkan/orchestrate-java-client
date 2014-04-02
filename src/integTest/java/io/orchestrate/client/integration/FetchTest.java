@@ -33,6 +33,7 @@ import static org.junit.Assert.*;
  * {@link io.orchestrate.client.EventFetchOperation},
  * {@link io.orchestrate.client.RelationFetchOperation}.
  */
+@org.junit.Ignore
 public final class FetchTest extends OperationTest {
 
     private <T> KvObject<T> result(final KvFetchOperation<T> kvFetchOp)

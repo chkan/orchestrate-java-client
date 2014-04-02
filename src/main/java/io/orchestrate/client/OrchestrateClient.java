@@ -8,8 +8,9 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.attributes.AttributeHolder;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.http.HttpClientFilter;
-import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.*;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.nio.NIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
@@ -156,6 +157,29 @@ public class OrchestrateClient implements NewClient {
         if (transport != null && !transport.isStopped()) {
             transport.shutdownNow();
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public OrchestrateRequest<Boolean> delete(final @NonNull String collection) {
+        final UEncoder urlEncoder = new UEncoder();
+        final String uri = urlEncoder.encodeURL(collection);
+
+        final HttpContent packet = HttpRequestPacket.builder()
+                .method(Method.DELETE)
+                .uri(uri)
+                .query("force=true")
+                .build()
+                .httpContentBuilder()
+                .build();
+
+        return new OrchestrateRequest<Boolean>(this, packet, new ResponseConverter<Boolean>() {
+            @Override
+            public Boolean from(final HttpContent response) throws IOException {
+                final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
+                return (status == HttpStatus.NO_CONTENT_204.getStatusCode());
+            }
+        });
     }
 
     /** {@inheritDoc} */

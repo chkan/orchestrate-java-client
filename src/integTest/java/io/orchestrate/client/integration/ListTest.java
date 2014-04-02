@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
+@org.junit.Ignore
 public class ListTest extends OperationTest {
 
     private <T> KvList<T> result(final KvListOperation<T> listOp)

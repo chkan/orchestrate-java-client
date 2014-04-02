@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
  * {@link io.orchestrate.client.EventStoreOperation},
  * {@link io.orchestrate.client.RelationStoreOperation}.
  */
+@org.junit.Ignore
 public final class StoreTest extends OperationTest {
 
     private KvMetadata result(final KvStoreOperation kvStoreOp)

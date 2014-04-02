@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 /**
  * {@link io.orchestrate.client.KvDeleteOperation}.
  */
+@org.junit.Ignore
 public final class DeleteTest extends OperationTest {
 
     private Boolean result(final KvDeleteOperation deleteOp)

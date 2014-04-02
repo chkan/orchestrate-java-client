@@ -27,6 +27,7 @@ import static org.junit.Assert.*;
 /**
  * {@link io.orchestrate.client.RelationPurgeOperation}.
  */
+@org.junit.Ignore
 public final class PurgeTest extends OperationTest {
 
     private KvMetadata storeKvObject()

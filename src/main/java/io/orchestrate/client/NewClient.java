@@ -9,6 +9,9 @@ public interface NewClient {
     public void close() throws IOException;
 
     // TODO
+    public OrchestrateRequest<Boolean> delete(final String collection);
+
+    // TODO
     public KvResource kv(final String collection, final String key);
 
     // TODO

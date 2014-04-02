@@ -29,6 +29,7 @@ import static org.junit.Assert.*;
 /**
  * {@link io.orchestrate.client.SearchOperation}.
  */
+@org.junit.Ignore
 public final class SearchTest extends OperationTest {
 
     private <T> SearchResults<T> result(final SearchOperation<T> searchOp)

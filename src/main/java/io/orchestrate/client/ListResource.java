@@ -100,11 +100,19 @@ public class ListResource {
     }
 
     public ListResource limit(final int limit) {
+        if (limit < 0) {
+            throw new IllegalArgumentException("'limit' cannot be empty.");
+        }
+
         this.limit = limit;
         return this;
     }
 
     public ListResource startKey(final @NonNull String startKey) {
+        if (startKey.length() < 1) {
+            throw new IllegalArgumentException("'startKey' cannot be empty.");
+        }
+
         this.startKey = startKey;
         return this;
     }

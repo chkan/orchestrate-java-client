@@ -97,6 +97,7 @@ final class ClientFilter extends BaseFilter {
                 case 201:   // intentional fallthrough
                 case 204:   // intentional fallthrough
                 case 404:   // intentional fallthrough
+                case 412:   // intentional fallthrough
                     future.result(content);
                     break;
                 default:

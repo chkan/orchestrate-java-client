@@ -16,7 +16,7 @@
 package io.orchestrate.client.itest;
 
 import com.pholser.junit.quickcheck.ForAll;
-import io.orchestrate.client.NewClient;
+import io.orchestrate.client.Client;
 import io.orchestrate.client.OrchestrateClient;
 import io.orchestrate.client.ResponseAdapter;
 import org.glassfish.grizzly.utils.DataStructures;
@@ -41,7 +41,7 @@ import static org.junit.Assume.assumeThat;
 public final class CollectionTest {
 
     /** The client to run tests on. */
-    private static NewClient client;
+    private static Client client;
 
     @BeforeClass
     public static void setUpClass() {

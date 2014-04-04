@@ -15,8 +15,6 @@
  */
 package io.orchestrate.client;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.attributes.Attribute;
 import org.glassfish.grizzly.filterchain.BaseFilter;
@@ -25,12 +23,14 @@ import org.glassfish.grizzly.filterchain.NextAction;
 import org.glassfish.grizzly.http.*;
 import org.glassfish.grizzly.http.util.Base64Utils;
 import org.glassfish.grizzly.http.util.Header;
-import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.impl.SafeFutureImpl;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
 
-import static org.glassfish.grizzly.attributes.DefaultAttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
+import static org.glassfish.grizzly.attributes.AttributeBuilder.DEFAULT_ATTRIBUTE_BUILDER;
 
 /**
  * A filter to handle HTTP operations and apply the Orchestrate.io
@@ -40,51 +40,47 @@ import static org.glassfish.grizzly.attributes.DefaultAttributeBuilder.DEFAULT_A
 final class ClientFilter extends BaseFilter {
 
     /** The name of the filter attribute for a HTTP response. */
-    public static final String HTTP_RESPONSE_ATTR = "orchestrate-client-response";
-    /** The attribute for the HTTP response. */
-    @Getter(AccessLevel.PACKAGE)
-    private final Attribute<OrchestrateFutureImpl> httpResponseAttr;
+    public static final String HTTP_RESPONSE_ATTR = "httpResp";
+    /** The value for the user agent header. */
+    private static final String BASE_USER_AGENT = buildBaseUserAgent();
 
+    /** The attribute for the HTTP response. */
+    private final Attribute<SafeFutureImpl<HttpContent>> httpResponseAttr;
     /** The header value to authenticate with the Orchestrate.io service */
     private final String authHeaderValue;
     /** The header value to indicate the client and version queried with. */
     private final String userAgentValue;
     /** The hostname for the Orchestrate.io service. */
     private final String host;
-    /** The version of the Orchestrate.io API to use. */
-    private final String version;
-    /** The mapper to use when deserializing responses from JSON. */
-    private final JacksonMapper mapper;
 
-    private static final String BASE_USER_AGENT = buildBaseUserAgent();
-
-    ClientFilter(final ClientBuilder builder) {
-        assert (builder != null);
-
-        assert (builder.getHost() != null);
-        assert (builder.getHost().toString().length() > 0);
-        assert (builder.getApiKey() != null);
-        assert (builder.getApiKey().length() > 0);
-        assert (builder.getVersion() != null);
-        assert (builder.getVersion().name().length() > 0);
-        assert (builder.getMapper() != null);
+    ClientFilter(
+            final String apiKey,
+            final URI host,
+            @Nullable final String userAgent) {
+        assert (apiKey != null);
+        assert (host != null);
 
         this.httpResponseAttr =
                 DEFAULT_ATTRIBUTE_BUILDER.createAttribute(HTTP_RESPONSE_ATTR);
         this.authHeaderValue =
-                "Basic ".concat(Base64Utils.encodeToString(builder.getApiKey().getBytes(), true));
-        this.userAgentValue = builder.getUserAgent() == null ? BASE_USER_AGENT :
-                BASE_USER_AGENT + " " + builder.getUserAgent();
-
-        this.host = builder.getHost().toString();
-        this.version = builder.getVersion().name();
-        this.mapper = builder.getMapper();
+                "Basic ".concat(Base64Utils.encodeToString(apiKey.getBytes(), true));
+        this.userAgentValue = (userAgent == null)
+                ? BASE_USER_AGENT
+                : String.format("%s %s", BASE_USER_AGENT, userAgent);
+        this.host = host.getHost();
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    public void exceptionOccurred(final FilterChainContext ctx, final Throwable error) {
+        final SafeFutureImpl<HttpContent> future =
+                httpResponseAttr.get(ctx.getConnection().getAttributes());
+        future.failure(error);
+        super.exceptionOccurred(ctx, error);
+    }
+
+    @Override
     public NextAction handleRead(final FilterChainContext ctx) throws IOException {
-        final OrchestrateFutureImpl future =
+        final SafeFutureImpl<HttpContent> future =
                 httpResponseAttr.get(ctx.getConnection().getAttributes());
         try {
             final HttpContent content = ctx.getMessage();
@@ -93,32 +89,26 @@ final class ClientFilter extends BaseFilter {
             }
 
             final HttpHeader header = content.getHttpHeader();
-            final HttpStatus status = ((HttpResponsePacket) header).getHttpStatus();
-            final int statusCode = status.getStatusCode();
+            final int status = ((HttpResponsePacket) header).getStatus();
 
-            log.info("Received content: {}", header);
-            final String contentString = content.getContent().toStringContent();
-
-            switch (statusCode) {
+            ClientFilter.log.info("Received content: {}", header);
+            switch (status) {
                 case 200:   // intentional fallthrough
                 case 201:   // intentional fallthrough
                 case 204:   // intentional fallthrough
                 case 404:   // intentional fallthrough
-                case 412:
-                    final Object result = future.getOperation()
-                            .fromResponse(statusCode, header, contentString, mapper);
-                    future.setResult(result);
+                    future.result(content);
                     break;
                 default:
                     final String reqId = header.getHeader("x-orchestrate-req-id");
-                    future.setException(new RequestException(statusCode, contentString, reqId));
+                    final String message = content.getContent().toStringContent();
+                    future.failure(new RequestException(status, message, reqId));
             }
-
-            return ctx.getStopAction();
         } catch (final Throwable t) {
-            future.setException(t);
-            return ctx.getStopAction();
+            future.failure(t);
         }
+
+        return ctx.getStopAction();
     }
 
     @Override
@@ -131,48 +121,37 @@ final class ClientFilter extends BaseFilter {
         final HttpPacket request = (HttpPacket) message;
         final HttpRequestPacket httpHeader = (HttpRequestPacket) request.getHttpHeader();
 
-        final String uriWithPrefix = "/"
-                .concat(version)    // add version information
-                .concat("/")
-                .concat(httpHeader.getRequestURI());
+        // add version information
+        final String uriWithPrefix = "/v0/".concat(httpHeader.getRequestURI());
 
         // adjust the HTTP request to include standard headers
         httpHeader.setProtocol(Protocol.HTTP_1_1);
-        httpHeader.setHeader(Header.UserAgent, userAgentValue);
         httpHeader.setHeader(Header.Host, host);
+        httpHeader.setHeader(Header.UserAgent, userAgentValue);
         httpHeader.setRequestURI(uriWithPrefix);
 
         // add basic auth information
         httpHeader.addHeader(Header.Authorization, authHeaderValue);
 
-        log.info("Sending request: {}", httpHeader);
+        ClientFilter.log.info("Sending request: {}", httpHeader);
         ctx.write(request);
 
         return ctx.getStopAction();
     }
 
-    @Override
-    public void exceptionOccurred(final FilterChainContext ctx, final Throwable ex) {
-        // propagate exceptions to the call-site
-        final OrchestrateFutureImpl future =
-                httpResponseAttr.get(ctx.getConnection().getAttributes());
-        future.setException(ex);
-
-        super.exceptionOccurred(ctx, ex);
-    }
-
     private static String buildBaseUserAgent() {
         String version = "unknown";
         try {
-            Properties props = new Properties();
+            final Properties props = new Properties();
             String basePath = "/" + ClientFilter.class.getPackage().getName().replace('.', '/');
             props.load(ClientFilter.class.getResourceAsStream(basePath + "/build.properties"));
             if (props.containsKey("version")) {
                 version = props.getProperty("version");
             }
-        } catch (Exception ex) {
+        } catch (final Exception ignored) {
         }
         return String.format("OrchestrateJavaClient/%s (Java/%s; %s)",
                 version, System.getProperty("java.version"), System.getProperty("java.vendor"));
     }
+
 }

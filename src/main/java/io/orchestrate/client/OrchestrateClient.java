@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * The client used to read and write data to the Orchestrate.io service.
  */
 @Slf4j
-public class OrchestrateClient implements NewClient {
+public class OrchestrateClient implements Client {
 
     /** The builder for this instance of the client. */
     private final Builder builder;
@@ -97,7 +97,7 @@ public class OrchestrateClient implements NewClient {
 
         filterChainBuilder
                 .add(new HttpClientFilter())
-                .add(new NewClientFilter(builder.apiKey, builder.host, builder.userAgent));
+                .add(new ClientFilter(builder.apiKey, builder.host, builder.userAgent));
         // TODO experiment with the Leader-Follower IOStrategy
         this.transport = TCPNIOTransportBuilder.newInstance()
                 .setTcpNoDelay(true)
@@ -143,7 +143,7 @@ public class OrchestrateClient implements NewClient {
         }
 
         final AttributeHolder attrs = connection.getAttributes();
-        attrs.setAttribute(NewClientFilter.HTTP_RESPONSE_ATTR, future);
+        attrs.setAttribute(ClientFilter.HTTP_RESPONSE_ATTR, future);
 
         @SuppressWarnings("unchecked")
         final GrizzlyFuture write = connection.write(request);

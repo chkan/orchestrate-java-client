@@ -63,7 +63,13 @@ public final class OrchestrateRequest<T> {
         }
     }
 
-    public void executeAsync() {
+    public void executeAsync(final @NonNull ResponseListener<T> listener) {
+        // ensure that this listener is triggered first
+        final Set<ResponseCompletionHandler<T>> listeners =
+                new LinkedHashSet<ResponseCompletionHandler<T>>();
+        listeners.add(new ResponseCompletionHandler<T>(listener, converter));
+        listeners.addAll(this.listeners);
+
         client.execute(httpRequest, listeners);
     }
 

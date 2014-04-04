@@ -264,7 +264,7 @@ public class OrchestrateClient implements Client {
          *
          * @param host The hostname for the Orchestrate.io service.
          * @return This builder.
-         * @see ClientBuilder#DEFAULT_HOST
+         * @see Builder#DEFAULT_HOST
          */
         public Builder host(final @NonNull String host) {
             if (host.length() < 1) {
@@ -280,7 +280,7 @@ public class OrchestrateClient implements Client {
          *
          * @param port The port for the Orchestrate.io service.
          * @return This builder.
-         * @see ClientBuilder#DEFAULT_PORT
+         * @see Builder#DEFAULT_PORT
          */
         public Builder port(final int port) {
             if (port < 1 || port > 65535) {

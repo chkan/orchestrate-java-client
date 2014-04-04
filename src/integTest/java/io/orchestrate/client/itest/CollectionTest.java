@@ -35,7 +35,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 /**
- * {@link io.orchestrate.client.OrchestrateClient#delete(String)}.
+ * {@link io.orchestrate.client.OrchestrateClient#deleteCollection(String)}.
  */
 @RunWith(Theories.class)
 public final class CollectionTest {
@@ -53,7 +53,7 @@ public final class CollectionTest {
     public void deleteCollection(@ForAll(sampleSize=10) final String collection) {
         assumeThat(collection, not(isEmptyString()));
 
-        final boolean result = client.delete(collection).execute();
+        final boolean result = client.deleteCollection(collection).execute();
         assertTrue(result);
     }
 
@@ -63,7 +63,7 @@ public final class CollectionTest {
         assumeThat(collection, not(isEmptyString()));
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
-        client.delete(collection)
+        client.deleteCollection(collection)
               .executeAsync(new ResponseAdapter<Boolean>() {
                   @Override
                   public void onSuccess(final Boolean object) {

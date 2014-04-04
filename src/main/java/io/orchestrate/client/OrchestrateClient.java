@@ -161,7 +161,7 @@ public class OrchestrateClient implements NewClient {
 
     /** {@inheritDoc} */
     @Override
-    public OrchestrateRequest<Boolean> delete(final @NonNull String collection) {
+    public OrchestrateRequest<Boolean> deleteCollection(final @NonNull String collection) {
         if (collection.length() < 1) {
             throw new IllegalArgumentException("'collection' cannot be empty.");
         }

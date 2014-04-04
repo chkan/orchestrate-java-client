@@ -53,6 +53,10 @@ public final class OrchestrateRequest<T> {
     }
 
     public T execute(final int timeout) {
+        if (timeout < 0) {
+            throw new IllegalArgumentException("'timeout' cannot be negative.");
+        }
+
         final GrizzlyFuture<HttpContent> future = client.execute(httpRequest, listeners);
 
         try {

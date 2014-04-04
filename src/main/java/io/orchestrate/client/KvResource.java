@@ -1,8 +1,6 @@
 package io.orchestrate.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import org.glassfish.grizzly.http.*;
 import org.glassfish.grizzly.http.util.Header;

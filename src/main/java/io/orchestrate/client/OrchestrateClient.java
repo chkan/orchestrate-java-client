@@ -8,8 +8,9 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.attributes.AttributeHolder;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
-import org.glassfish.grizzly.http.HttpClientFilter;
-import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.*;
+import org.glassfish.grizzly.http.util.HttpStatus;
+import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.nio.NIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
  * The client used to read and write data to the Orchestrate.io service.
  */
 @Slf4j
-public class OrchestrateClient implements NewClient {
+public class OrchestrateClient implements Client {
 
     /** The builder for this instance of the client. */
     private final Builder builder;
@@ -96,7 +97,7 @@ public class OrchestrateClient implements NewClient {
 
         filterChainBuilder
                 .add(new HttpClientFilter())
-                .add(new NewClientFilter(builder.apiKey, builder.host, builder.userAgent));
+                .add(new ClientFilter(builder.apiKey, builder.host, builder.userAgent));
         // TODO experiment with the Leader-Follower IOStrategy
         this.transport = TCPNIOTransportBuilder.newInstance()
                 .setTcpNoDelay(true)
@@ -142,7 +143,7 @@ public class OrchestrateClient implements NewClient {
         }
 
         final AttributeHolder attrs = connection.getAttributes();
-        attrs.setAttribute(NewClientFilter.HTTP_RESPONSE_ATTR, future);
+        attrs.setAttribute(ClientFilter.HTTP_RESPONSE_ATTR, future);
 
         @SuppressWarnings("unchecked")
         final GrizzlyFuture write = connection.write(request);
@@ -156,6 +157,33 @@ public class OrchestrateClient implements NewClient {
         if (transport != null && !transport.isStopped()) {
             transport.shutdownNow();
         }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public OrchestrateRequest<Boolean> deleteCollection(final @NonNull String collection) {
+        if (collection.length() < 1) {
+            throw new IllegalArgumentException("'collection' cannot be empty.");
+        }
+
+        final UEncoder urlEncoder = new UEncoder();
+        final String uri = urlEncoder.encodeURL(collection);
+
+        final HttpContent packet = HttpRequestPacket.builder()
+                .method(Method.DELETE)
+                .uri(uri)
+                .query("force=true")
+                .build()
+                .httpContentBuilder()
+                .build();
+
+        return new OrchestrateRequest<Boolean>(this, packet, new ResponseConverter<Boolean>() {
+            @Override
+            public Boolean from(final HttpContent response) throws IOException {
+                final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
+                return (status == HttpStatus.NO_CONTENT_204.getStatusCode());
+            }
+        });
     }
 
     /** {@inheritDoc} */
@@ -236,7 +264,7 @@ public class OrchestrateClient implements NewClient {
          *
          * @param host The hostname for the Orchestrate.io service.
          * @return This builder.
-         * @see ClientBuilder#DEFAULT_HOST
+         * @see Builder#DEFAULT_HOST
          */
         public Builder host(final @NonNull String host) {
             if (host.length() < 1) {
@@ -252,7 +280,7 @@ public class OrchestrateClient implements NewClient {
          *
          * @param port The port for the Orchestrate.io service.
          * @return This builder.
-         * @see ClientBuilder#DEFAULT_PORT
+         * @see Builder#DEFAULT_PORT
          */
         public Builder port(final int port) {
             if (port < 1 || port > 65535) {

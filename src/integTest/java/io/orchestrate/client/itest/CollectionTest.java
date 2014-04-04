@@ -64,7 +64,7 @@ public final class CollectionTest {
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
         client.delete(collection)
-              .on(new ResponseAdapter<Boolean>() {
+              .executeAsync(new ResponseAdapter<Boolean>() {
                   @Override
                   public void onSuccess(final Boolean object) {
                       queue.add(object);
@@ -74,8 +74,7 @@ public final class CollectionTest {
                   public void onFailure(final Throwable error) {
                       fail(error.getMessage());
                   }
-              })
-              .executeAsync();
+              });
 
         final Boolean result = queue.poll(5000, TimeUnit.MILLISECONDS);
         assertTrue(result);

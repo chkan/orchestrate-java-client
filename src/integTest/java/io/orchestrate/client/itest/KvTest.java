@@ -26,9 +26,10 @@ import org.junit.contrib.theories.Theory;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.isEmptyString;
@@ -42,28 +43,7 @@ import static org.junit.Assume.assumeThat;
 @RunWith(Theories.class)
 public final class KvTest {
 
-    /** The collection names for the integration tests. */
-    private static final String[] COLLECTIONS = new String[] {
-            "deleteKey",
-            "deleteKeyAsync",
-            "deleteKeyIfMatch",
-            "deleteKeyIfMatchAsync",
-            "getKey",
-            "getKeyAsync",
-            "getKeyTimed",
-            "getKeyWithListener",
-            "getKeyWithListenerAsync",
-            "purgeKey",
-            "purgeKeyAsync",
-            "purgeKeyIfMatch",
-            "purgeKeyIfMatchAsync",
-            "putKey",
-            "putKeyAsync",
-            "putKeyIfAbsent",
-            "putKeyIfAbsentAsync",
-            "putKeyIfMatch",
-            "putKeyIfMatchAsync"
-    };
+    private static final Set<String> COLLECTIONS = new HashSet<String>();
 
     /** The client to run tests on. */
     private static Client client;
@@ -89,7 +69,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final Boolean result =
-                client.kv(COLLECTIONS[0], key)
+                client.kv(collection(), key)
                       .delete()
                       .execute();
 
@@ -102,7 +82,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
-        client.kv(COLLECTIONS[1], key)
+        client.kv(collection(), key)
               .delete()
               .executeAsync(new ResponseAdapter<Boolean>() {
                   @Override
@@ -120,11 +100,26 @@ public final class KvTest {
         assertTrue(result);
     }
 
+    private String collection() {
+        for(StackTraceElement frame : Thread.currentThread().getStackTrace()) {
+            if(frame.getClassName().equals(KvTest.class.getName()) && !frame.getMethodName().equals("collection")) {
+                String collection = frame.getMethodName();
+                if(!COLLECTIONS.contains(collection)){
+                    synchronized (COLLECTIONS) {
+                        COLLECTIONS.add(collection);
+                    }
+                }
+                return collection;
+            }
+        }
+        throw new IllegalStateException("Cannot determine test method name.");
+    }
+
     @Theory
     public void deleteKeyIfMatch(@ForAll(sampleSize=10) final String key) {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[2], "key").put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), "key").put("{}").execute();
 
         final Boolean result =
                 client.kv(obj.getCollection(), obj.getKey())
@@ -141,7 +136,7 @@ public final class KvTest {
             throws InterruptedException {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[3], "key").put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), "key").put("{}").execute();
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
         client.kv(obj.getCollection(), obj.getKey())
@@ -169,7 +164,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final KvMetadata kvMetadata =
-                client.kv(COLLECTIONS[4], key)
+                client.kv(collection(), key)
                       .put("{}")
                       .execute();
 
@@ -192,7 +187,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final KvMetadata kvMetadata =
-                client.kv(COLLECTIONS[5], key)
+                client.kv(collection(), key)
                       .put("{}")
                       .execute();
 
@@ -226,7 +221,7 @@ public final class KvTest {
     public void getKeyTimed(@ForAll(sampleSize=10) final String key) {
         thrown.expect(RuntimeException.class);
 
-        client.kv(COLLECTIONS[6], key).get(String.class).execute(0);
+        client.kv(collection(), key).get(String.class).execute(0);
     }
 
     @Theory
@@ -236,13 +231,13 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final KvMetadata kvMetadata =
-                client.kv(COLLECTIONS[5], key)
+                client.kv(collection(), key)
                       .put("{}")
                       .execute();
 
         final BlockingQueue<KvObject> queue = DataStructures.getLTQInstance(KvObject.class);
         final KvObject<String> object =
-                client.kv(COLLECTIONS[7], key)
+                client.kv(collection(), key)
                       .get(String.class)
                       .on(new ResponseAdapter<KvObject<String>>() {
                           @Override
@@ -282,7 +277,7 @@ public final class KvTest {
     public void getKeyWithListenerAsync(@ForAll(sampleSize=10) final String key)
             throws InterruptedException {
         final BlockingQueue<KvObject> queue = DataStructures.getLTQInstance(KvObject.class);
-        client.kv(COLLECTIONS[8], key)
+        client.kv(collection(), key)
               .get(String.class)
               .executeAsync(new ResponseAdapter<KvObject<String>>() {
                   @Override
@@ -305,7 +300,7 @@ public final class KvTest {
     public void purgeKey(@ForAll(sampleSize=10) final String key) {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[9], key).put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), key).put("{}").execute();
 
         final Boolean result =
                 client.kv(obj.getCollection(), obj.getKey())
@@ -327,7 +322,7 @@ public final class KvTest {
             throws InterruptedException {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[10], key).put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), key).put("{}").execute();
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
         client.kv(obj.getCollection(), obj.getKey())
@@ -360,7 +355,7 @@ public final class KvTest {
     public void purgeKeyIfMatch(@ForAll(sampleSize=10) final String key) {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[11], key).put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), key).put("{}").execute();
 
         final Boolean result =
                 client.kv(obj.getCollection(), obj.getKey())
@@ -383,7 +378,7 @@ public final class KvTest {
             throws InterruptedException {
         assumeThat(key, not(isEmptyString()));
 
-        final KvMetadata obj = client.kv(COLLECTIONS[12], key).put("{}").execute();
+        final KvMetadata obj = client.kv(collection(), key).put("{}").execute();
 
         final BlockingQueue<Boolean> queue = DataStructures.getLTQInstance(Boolean.class);
         client.kv(obj.getCollection(), obj.getKey())
@@ -418,7 +413,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final KvMetadata kvMetadata =
-                client.kv(COLLECTIONS[13], key)
+                client.kv(collection(), key)
                       .put("{}")
                       .execute();
 
@@ -441,7 +436,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final BlockingQueue<KvMetadata> queue = DataStructures.getLTQInstance(KvMetadata.class);
-        client.kv(COLLECTIONS[14], key)
+        client.kv(collection(), key)
               .put("{}")
               .executeAsync(new ResponseAdapter<KvMetadata>() {
                   @Override
@@ -475,7 +470,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final KvMetadata kvMetadata =
-                client.kv(COLLECTIONS[15], key)
+                client.kv(collection(), key)
                       .ifAbsent(Boolean.TRUE)
                       .put("{}")
                       .execute();
@@ -507,7 +502,7 @@ public final class KvTest {
         assumeThat(key, not(isEmptyString()));
 
         final BlockingQueue<KvMetadata> queue = DataStructures.getLTQInstance(KvMetadata.class);
-        client.kv(COLLECTIONS[16], key)
+        client.kv(collection(), key)
               .ifAbsent(Boolean.TRUE)
               .put("{}")
               .executeAsync(new ResponseAdapter<KvMetadata>() {
@@ -549,7 +544,7 @@ public final class KvTest {
     public void putKeyIfMatch(@ForAll(sampleSize=10) final String key) {
         assumeThat(key, not(isEmptyString()));
 
-        final String collection = COLLECTIONS[17];
+        final String collection = collection();
         final KvMetadata kvMetadata =
                 client.kv(collection, key)
                       .put("{}")
@@ -572,7 +567,7 @@ public final class KvTest {
             throws InterruptedException {
         assumeThat(key, not(isEmptyString()));
 
-        final String collection = COLLECTIONS[18];
+        final String collection = collection();
         final KvMetadata kvMetadata =
                 client.kv(collection, key)
                       .put("{}")

@@ -53,8 +53,12 @@ public final class KvTest {
 
     @BeforeClass
     public static void setUpClass() {
-        final String apiKey = "e927d81d-579b-4dcb-bd30-78cc67203107";
-        client = OrchestrateClient.builder(apiKey).build();
+        client = createClient();
+    }
+
+    public static Client createClient() {
+        final String apiKey = "c1167b51-b0ae-45ce-b0f6-e5c57aba0a06";
+        return OrchestrateClient.builder(apiKey).host("http://localhost").port(9090).useSSL(false).build();
     }
 
     @AfterClass

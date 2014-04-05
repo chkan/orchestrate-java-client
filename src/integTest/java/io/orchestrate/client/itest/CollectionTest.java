@@ -45,8 +45,7 @@ public final class CollectionTest {
 
     @BeforeClass
     public static void setUpClass() {
-        final String apiKey = "e927d81d-579b-4dcb-bd30-78cc67203107";
-        client = OrchestrateClient.builder(apiKey).build();
+        client = KvTest.createClient();
     }
 
     @Theory

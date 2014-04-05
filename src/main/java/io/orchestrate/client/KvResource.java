@@ -23,8 +23,10 @@ import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
+import org.glassfish.grizzly.utils.BufferInputStream;
 
 import javax.annotation.Nullable;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 

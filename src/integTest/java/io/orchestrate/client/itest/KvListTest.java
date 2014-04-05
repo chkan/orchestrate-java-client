@@ -15,6 +15,7 @@
  */
 package io.orchestrate.client.itest;
 
+import com.google.common.io.BaseEncoding;
 import com.pholser.junit.quickcheck.ForAll;
 import io.orchestrate.client.*;
 import org.glassfish.grizzly.utils.DataStructures;
@@ -23,6 +24,7 @@ import org.junit.contrib.theories.Theories;
 import org.junit.contrib.theories.Theory;
 import org.junit.runner.RunWith;
 
+import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -37,14 +39,14 @@ import static org.junit.Assume.assumeThat;
  */
 @RunWith(Theories.class)
 public final class KvListTest {
+    private static final BaseEncoding HEX = BaseEncoding.base16().lowerCase();
 
     /** The client to run tests on. */
     private static Client client;
 
     @BeforeClass
     public static void setUpClass() {
-        final String apiKey = "e927d81d-579b-4dcb-bd30-78cc67203107";
-        client = OrchestrateClient.builder(apiKey).build();
+        client = KvTest.createClient();
     }
 
     @Theory
@@ -68,7 +70,18 @@ public final class KvListTest {
 
         final KvObject<String> kvObject = kvList.iterator().next();
         assertNotNull(kvObject);
-        assertEquals(kvMetadata.getCollection(), kvObject.getCollection());
+        assertEquals("KvMetadata collection should match", collection, kvMetadata.getCollection());
+
+        StringBuilder buff = new StringBuilder();
+        String collectionHex = HEX.encode(collection.getBytes(Charset.forName("UTF-8")));
+        String kvCollectionHex = HEX.encode(kvObject.getCollection().getBytes(Charset.forName("UTF-8")));
+        buff.append("UTF-8 hex ["+collectionHex+","+kvCollectionHex+"] ("+(collectionHex.equals(kvCollectionHex)?"equals":"NOT equal")+") ");
+
+        String collectionHex2 = HEX.encode(collection.getBytes(Charset.forName("UTF-16")));
+        String kvCollectionHex2 = HEX.encode(kvObject.getCollection().getBytes(Charset.forName("UTF-16")));
+        buff.append("UTF-16 hex ["+collectionHex2+","+kvCollectionHex2+"] ("+(collectionHex2.equals(kvCollectionHex2)?"equals":"NOT equal")+") ");
+
+        assertEquals("Collection Names not equal. "+buff.toString(), kvMetadata.getCollection(), kvObject.getCollection());
         assertEquals(kvMetadata.getKey(), kvObject.getKey());
         assertEquals(kvMetadata.getRef(), kvObject.getRef());
         assertEquals("{}", kvObject.getValue());

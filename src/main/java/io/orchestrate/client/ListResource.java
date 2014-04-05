@@ -11,6 +11,7 @@ import org.glassfish.grizzly.http.util.UEncoder;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,10 @@ public class ListResource {
     }
 
     public <T> OrchestrateRequest<KvList<T>> get(final @NonNull Class<T> clazz) {
+        if (startKey != null && inclusive) {
+            throw new IllegalStateException("'inclusive' requires 'startKey' for request.");
+        }
+
         final UEncoder urlEncoder = new UEncoder();
         final String uri = urlEncoder.encodeURL(collection);
         String query = "limit=".concat(limit + "");
@@ -73,7 +78,7 @@ public class ListResource {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 assert (status == 200);
 
-                final String json = response.getContent().toStringContent();
+                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
                 final JsonNode jsonNode = mapper.readTree(json);
 
                 final String next = (jsonNode.has("next")) ? jsonNode.get("next").asText() : null;
@@ -101,7 +106,7 @@ public class ListResource {
 
     public ListResource limit(final int limit) {
         if (limit < 0) {
-            throw new IllegalArgumentException("'limit' cannot be empty.");
+            throw new IllegalArgumentException("'limit' cannot be negative.");
         }
 
         this.limit = limit;

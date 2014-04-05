@@ -16,10 +16,7 @@
 package io.orchestrate.client.itest;
 
 import com.pholser.junit.quickcheck.ForAll;
-import io.orchestrate.client.KvList;
-import io.orchestrate.client.NewClient;
-import io.orchestrate.client.OrchestrateClient;
-import io.orchestrate.client.ResponseAdapter;
+import io.orchestrate.client.*;
 import org.glassfish.grizzly.utils.DataStructures;
 import org.junit.BeforeClass;
 import org.junit.contrib.theories.Theories;
@@ -31,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.isEmptyString;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -41,7 +38,7 @@ import static org.junit.Assume.assumeThat;
 public final class KvListTest {
 
     /** The client to run tests on. */
-    private static NewClient client;
+    private static Client client;
 
     @BeforeClass
     public static void setUpClass() {
@@ -53,14 +50,27 @@ public final class KvListTest {
     public void getList(@ForAll(sampleSize=10) final String collection) {
         assumeThat(collection, not(isEmptyString()));
 
-        final KvList<String> list =
-                client.list(collection)
+        final KvMetadata kvMetadata =
+                client.kv(collection, "key")
+                      .put("{}")
+                      .execute();
+
+        final KvList<String> kvList =
+                client.list(kvMetadata.getCollection())
                       .limit(1)
-                      .inclusive()
                       .get(String.class)
                       .execute();
 
-        // FIXME
+        assertNotNull(kvMetadata);
+        assertNotNull(kvList);
+        assertTrue(kvList.iterator().hasNext());
+
+        final KvObject<String> kvObject = kvList.iterator().next();
+        assertNotNull(kvObject);
+        assertEquals(kvMetadata.getCollection(), kvObject.getCollection());
+        assertEquals(kvMetadata.getKey(), kvObject.getKey());
+        assertEquals(kvMetadata.getRef(), kvObject.getRef());
+        assertEquals("{}", kvObject.getValue());
     }
 
     @Theory
@@ -68,12 +78,16 @@ public final class KvListTest {
             throws InterruptedException {
         assumeThat(collection, not(isEmptyString()));
 
+        final KvMetadata kvMetadata =
+                client.kv(collection, "key")
+                      .put("{}")
+                      .execute();
+
         final BlockingQueue<KvList> queue = DataStructures.getLTQInstance(KvList.class);
-        client.list(collection)
+        client.list(kvMetadata.getCollection())
               .limit(1)
-              .inclusive()
               .get(String.class)
-              .on(new ResponseAdapter<KvList<String>>() {
+              .executeAsync(new ResponseAdapter<KvList<String>>() {
                   @Override
                   public void onSuccess(final KvList<String> object) {
                       queue.add(object);
@@ -83,12 +97,21 @@ public final class KvListTest {
                   public void onFailure(final Throwable error) {
                       fail(error.getMessage());
                   }
-              })
-              .executeAsync();
+              });
 
         @SuppressWarnings("unchecked")
-        final KvList<String> result = queue.poll(5000, TimeUnit.MILLISECONDS);
-        // FIXME
+        final KvList<String> kvList = queue.poll(5000, TimeUnit.MILLISECONDS);
+
+        assertNotNull(kvMetadata);
+        assertNotNull(kvList);
+        assertTrue(kvList.iterator().hasNext());
+
+        final KvObject<String> kvObject = kvList.iterator().next();
+        assertNotNull(kvObject);
+        assertEquals(kvMetadata.getCollection(), kvObject.getCollection());
+        assertEquals(kvMetadata.getKey(), kvObject.getKey());
+        assertEquals(kvMetadata.getRef(), kvObject.getRef());
+        assertEquals("{}", kvObject.getValue());
     }
 
 }

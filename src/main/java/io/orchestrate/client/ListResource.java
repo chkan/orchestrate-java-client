@@ -8,7 +8,6 @@ import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.UEncoder;
-import org.glassfish.grizzly.http.util.URLDecoder;
 
 import javax.annotation.Nullable;
 import java.io.IOException;

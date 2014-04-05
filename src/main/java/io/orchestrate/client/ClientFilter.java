@@ -92,17 +92,12 @@ final class ClientFilter extends BaseFilter {
             final int status = ((HttpResponsePacket) header).getStatus();
 
             ClientFilter.log.info("Received content: {}", header);
-            switch (status) {
-                case 200:   // intentional fallthrough
-                case 201:   // intentional fallthrough
-                case 204:   // intentional fallthrough
-                case 404:   // intentional fallthrough
-                    future.result(content);
-                    break;
-                default:
-                    final String reqId = header.getHeader("x-orchestrate-req-id");
-                    final String message = content.getContent().toStringContent();
-                    future.failure(new RequestException(status, message, reqId));
+            if (status < 500) {
+                future.result(content);
+            } else {
+                final String reqId = header.getHeader("x-orchestrate-req-id");
+                final String message = content.getContent().toStringContent();
+                future.failure(new RequestException(status, message, reqId));
             }
         } catch (final Throwable t) {
             future.failure(t);

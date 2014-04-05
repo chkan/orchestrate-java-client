@@ -66,13 +66,13 @@ public final class CollectionTest {
         client.deleteCollection(collection)
               .executeAsync(new ResponseAdapter<Boolean>() {
                   @Override
-                  public void onSuccess(final Boolean object) {
-                      queue.add(object);
+                  public void onFailure(final Throwable error) {
+                      fail(error.getMessage());
                   }
 
                   @Override
-                  public void onFailure(final Throwable error) {
-                      fail(error.getMessage());
+                  public void onSuccess(final Boolean object) {
+                      queue.add(object);
                   }
               });
 

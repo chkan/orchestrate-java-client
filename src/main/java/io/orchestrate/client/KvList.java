@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ public class KvList<T> implements Iterable<KvObject<T>> {
     /** The total number of KV objects. */
     private final int count;
     /** The next page of the results URL specified. */
-    private final String next;
+    private final OrchestrateRequest<KvList<T>> next;
 
-    KvList(final List<KvObject<T>> results, final int count, @Nullable final String next) {
+    KvList(final List<KvObject<T>> results, final int count, @Nullable final OrchestrateRequest<KvList<T>> next) {
         assert (results != null);
         assert (count >= 0);
 
@@ -71,7 +71,7 @@ public class KvList<T> implements Iterable<KvObject<T>> {
      * @return The URL of the next page of KV objects.
      */
     @Nullable
-    public final String getNext() {
+    public final OrchestrateRequest<KvList<T>> getNext() {
         return next;
     }
 

@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.isEmptyString;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeThat;
 
 /**
@@ -112,6 +113,42 @@ public final class KvListTest {
         assertEquals(kvMetadata.getKey(), kvObject.getKey());
         assertEquals(kvMetadata.getRef(), kvObject.getRef());
         assertEquals("{}", kvObject.getValue());
+    }
+
+    @Theory
+    public void getListAndPaginate(@ForAll(sampleSize=10) final String collection) {
+        assumeThat(collection, not(isEmptyString()));
+
+        final KvMetadata kvMetadata1 =
+                client.kv(collection, "key1")
+                      .put("{}")
+                      .execute();
+        final KvMetadata kvMetadata2 =
+                client.kv(collection, "key2")
+                      .put("{}")
+                      .execute();
+
+        final KvList<String> kvList1 =
+                client.list(kvMetadata1.getCollection())
+                      .limit(1)
+                      .get(String.class)
+                      .execute();
+
+        assertNotNull(kvMetadata1);
+        assertNotNull(kvMetadata2);
+        assertNotNull(kvList1);
+        assertTrue(kvList1.iterator().hasNext());
+
+        final KvObject<String> kvObject1 = kvList1.iterator().next();
+        assertNotNull(kvObject1);
+        assertTrue(kvList1.hasNext());
+
+        final KvList<String> kvList2 = kvList1.getNext().execute();
+        assertNotNull(kvList2);
+        assertTrue(kvList2.iterator().hasNext());
+
+        final KvObject<String> kvObject2 = kvList2.iterator().next();
+        assertNotNull(kvObject2);
     }
 
 }

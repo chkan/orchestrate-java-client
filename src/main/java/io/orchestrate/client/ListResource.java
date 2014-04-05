@@ -8,9 +8,11 @@ import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.UEncoder;
+import org.glassfish.grizzly.http.util.URLDecoder;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -71,7 +73,6 @@ public class ListResource {
                 .httpContentBuilder()
                 .build();
 
-        // FIXME return an OrchestrateRequest instead of the "next" string
         return new OrchestrateRequest<KvList<T>>(client, packet, new ResponseConverter<KvList<T>>() {
             @Override
             public KvList<T> from(final HttpContent response) throws IOException {
@@ -81,7 +82,21 @@ public class ListResource {
                 final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
                 final JsonNode jsonNode = mapper.readTree(json);
 
-                final String next = (jsonNode.has("next")) ? jsonNode.get("next").asText() : null;
+                final OrchestrateRequest<KvList<T>> next;
+                if (jsonNode.has("next")) {
+                    final String page = jsonNode.get("next").asText();
+                    final URI url = URI.create(page);
+                    final HttpContent packet = HttpRequestPacket.builder()
+                            .method(Method.GET)
+                            .uri(uri)
+                            .query(url.getQuery())
+                            .build()
+                            .httpContentBuilder()
+                            .build();
+                    next = new OrchestrateRequest<KvList<T>>(client, packet, this);
+                } else {
+                    next = null;
+                }
                 final int count = jsonNode.get("count").asInt();
                 final List<KvObject<T>> results = new ArrayList<KvObject<T>>(count);
 

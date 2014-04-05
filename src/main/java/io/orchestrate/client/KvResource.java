@@ -165,9 +165,9 @@ public class KvResource {
         final byte[] content;
         try {
             content = (value instanceof String)
-                    ? ((String) value).getBytes()
+                    ? ((String) value).getBytes("UTF-8")
                     : mapper.writeValueAsBytes(value);
-        } catch (final JsonProcessingException e) {
+        } catch (final Exception e) {
             throw new RuntimeException(e); // FIXME
         }
 

@@ -73,7 +73,7 @@ client.kv("someCollection", "someKey")
           }
 
           @Override
-          public void onSuccess(final KvObject<String> object) {
+          public void onSuccess(final KvObject<DomainObject> object) {
               if (object == null) {
                   // we received a 404, no KV object exists
               }

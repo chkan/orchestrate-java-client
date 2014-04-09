@@ -7,34 +7,28 @@ The examples below demonstrate how to integrate the Java client into a few of
 
 ## <a name="listenable-future"></a> Listenable Future
 
-As well as using the `j.u.c.Future` to block when receiving the result of a
- request to the Orchestrate service it's possible to use the client in a fully
- non-blocking way (i.e. "callback-style").
+As well as making a blocking API call to Orchestrate to receive the result of
+ a request to the service it's also possible to listen (or subscribe) for the
+ result in a fully non-blocking way (i.e. "callback style").
 
 ```java
-final Client client = new HttpClient("your api key");
-final KvStoreOperation kvStoreOp =
-        new KvStoreOperation("collection", "key", new MyObj());
-kvStoreOp.addListener(new OrchestrateFutureListener<KvMetadata>() {
-    @Override
-    public void onComplete(final OrchestrateFuture<KvMetadata> future) {
-        try {
-            final KvMetadata kvMetadata = future.get();
-        } catch(final Throwable ignored) {}
-    }
-    @Override
-    public void onException(final OrchestrateFuture<KvMetadata> future) {
-        // handle error condition
-    }
-});
-client.execute(kvStoreOp);
+final DomainObject obj = new DomainObject();
+
+final Client client = new OrchestrateClient("your api key");
+client.kv("someCollection", "someKey")
+      .put(obj)
+      .on(new ResponseAdapter<KvMetadata>() {
+          @Override
+          public void onFailure(final Throwable error) {
+              // handle error condition
+          }
+
+          @Override
+          public void onSuccess(final KvMetadata object) {
+              // do something with the result
+          }
+      });
 ```
-
-#### Note
-
-In the example above, it's still necessary to catch the checked exception
- even though it will never be thrown in the `onComplete` method. This will be
- improved in the next release.
 
 ## <a name="data-access-object"></a> Data Access Object (DAO) Pattern
 
@@ -81,14 +75,11 @@ Using the `MyObjectDao` object shown above, writing data to the service becomes
  even easier.
 
 ```java
-Client client = new Client("your api key");
+Client client = new OrchestrateClient("your api key");
 MyObjectDao dao = new MyObjectDao(client);
 
 // save my object
-Future<KvMetadata> futureSave = dao.save(new MyObject());
-
-// wait for the save to complete
-futureSave.get();
+KvMetadata kvMetadata = dao.save(new MyObject());
 ```
 
 You can read more about the `GenericAsyncDao` in the
@@ -121,7 +112,7 @@ public class OrchestrateClientManager implements Managed {
 
     @Override
     public void stop() throws Exception {
-        client.stop();
+        client.close();
     }
 
 }
@@ -131,41 +122,37 @@ Configuring the Java client for Dropwizard is easy.
 
 ## <a name="error-handling"></a> Error Handling
 
-When you `execute` a client operation, you are returned an `OrchestrateFuture`
- for the result. This type is an extension of the `java.util.concurrent.Future`
- that allows you to register listeners that are run when the result is received
- from the asynchronous operation.
+When you call `get` an OrchestrateRequest, the client will block for the result. You
+ may still register listeners that are run when the result is received from the
+ service, even if you ultimately call `get` to block waiting for the result.
 
-When you receive a result you can retrieve it from the `future` with the
- `Future#get(..)` method(s), they will throw an exception if one was received
- while processing the request or response. In all cases an unchecked exception
- will be thrown.
+When you receive a result it will throw an exception if the client could not
+ complete the request or the result could not be deserialized from JSON. In all
+cases an unchecked exception will be thrown.
 
 This is done primarily because usually the client can not recover from a bad
  operation, it is likely to be a programming error or a networking problem while
  making the HTTP request. As a result, forcing developers to catch a checked
  exception can result in unnecessary code in a `catch()` block.
 
-To listen for an error in the future you can use an `OrchestrateFutureListener`.
+To listen for an error in the request you can use a `ResponseListener`.
 
 ```java
-import io.orchestrate.client.OrchestrateFuture;
-import io.orchestrate.client.OrchestrateFutureListener;
+import io.orchestrate.client.ResponseListener;
 
-public class MyObjectOperationListener
-        implements OrchestrateFutureListener<MyObject> {
+public class MyObjectResponseListener implements ResponseListener<MyObject> {
 
     @Override
-    public void onComplete(final OrchestrateFuture<MyObject> future) {
+    public void onFailure(final Throwable error) {
+        /* do something */
     }
 
     @Override
-    public void onException(final OrchestrateFuture<MyObject> future) {
-        /* do something */
+    public void onSuccess(final Boolean object) {
     }
 
 }
 ```
 
-You can read more about the `OrchestrateFutureListener` in the
- [javadocs](/javadoc/latest/io/orchestrate/client/OrchestrateFutureListener.html).
+You can read more about the `ResponseListener` in the
+ [javadocs](/javadoc/latest/io/orchestrate/client/ResponseListener.html).

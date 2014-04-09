@@ -7,7 +7,7 @@ We're constantly improving the Orchestrate.io service.
 Adding new features, optimising the performance of the platform and refining our
  efforts on the goal of providing developers all the query functionality you
  need to build large scale applications like Foursquare, Twitter and Facebook
- with Orchestrate.io.
+ with Orchestrate.
 
 We welcome all feedback you have about the service, no matter how small. We're
  especially interested in limitations you encounter that delay or prevent you
@@ -23,9 +23,9 @@ You can also request new features or vote for an existing one via our UserVoice:
 
 ## <a name="debugging-requests"></a> Debugging Requests
 
-When you `execute` a client operation, the library makes a HTTP request to the
- Orchestrate platform. The service responds to the request with a response
- containing an `X-Orchestrate-Req-Id` header. This helps us locate the HTTP
+When you call any of the Resource methods that return an OrchestrateRequest, the library
+ makes a HTTP request to the Orchestrate platform. The service responds to the request
+ with a response containing an `X-Orchestrate-Req-Id` header. This helps us locate the HTTP
  request information internally when debugging a problem.
 
 You can see this response information by enabling `INFO` level logging in the

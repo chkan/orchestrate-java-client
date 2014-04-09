@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,125 +22,78 @@ import java.io.IOException;
  */
 public interface Client {
 
-    /** Initial API; has KV, Events, Search, and early Graph support. */
-    public static final API V0 = API.v0;
-
-    /**
-     * The different versions of the Orchestrate.io service.
-     */
-    enum API {
-        v0
-    }
-
-    /**
-     * Executes the specified {@code deleteOp} on the Orchestrate.io service.
-     *
-     * @param deleteOp The delete operation to execute.
-     * @return A future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final DeleteOperation deleteOp);
-
-    /**
-     * Executes the specified {@code kvDeleteOp} on the Orchestrate.io service.
-     *
-     * @param kvDeleteOp The delete operation to execute.
-     * @return A future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final KvDeleteOperation kvDeleteOp);
-
-    /**
-     * Executes the specified {@code kvPurgeOp} on the Orchestrate.io service.
-     *
-     * @param kvPurgeOp The purge operation to execute.
-     * @return A future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final KvPurgeOperation kvPurgeOp);
-
-    /**
-     * Executes the specified {@code eventFetchOp} on the Orchestrate.io service.
-     *
-     * @param eventFetchOp The event fetch operation to execute.
-     * @param <T> The type to deserialize the results to.
-     * @return A future for the response from this operation.
-     */
-    public <T> OrchestrateFuture<Iterable<Event<T>>> execute(final EventFetchOperation<T> eventFetchOp);
-
-    /**
-     * Executes the specified {@code eventStoreOp} on the Orchestrate.io service.
-     *
-     * @param eventStoreOp The event store operation to execute.
-     * @return A future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final EventStoreOperation eventStoreOp);
-
-    /**
-     * Executes the specified {@code kvFetchOp} on the Orchestrate.io service.
-     *
-     * @param kvFetchOp The KV fetch operation to execute.
-     * @param <T> The type to deserialize the results to.
-     * @return The future for the response from this operation.
-     */
-    public <T> OrchestrateFuture<KvObject<T>> execute(final KvFetchOperation<T> kvFetchOp);
-
-    /**
-     * Executes the specified {@code kvListOp} on the Orchestrate.io service.
-     *
-     * @param kvListOp The KV list operation to execute.
-     * @param <T> The type to deserialize the results to.
-     * @return The future for the response from this operation.
-     */
-    public <T> OrchestrateFuture<KvList<T>> execute(final KvListOperation<T> kvListOp);
-
-    /**
-     * Executes the specified {@code kvStoreOp} on the Orchestrate.io service.
-     *
-     * @param kvStoreOp The KV store operation to execute.
-     * @return The future for the response from this operation.
-     */
-    public OrchestrateFuture<KvMetadata> execute(final KvStoreOperation kvStoreOp);
-
-    /**
-     * Executes the specified {@code relationFetchOp} on the Orchestrate.io
-     * service.
-     *
-     * @param relationFetchOp The relation fetch operation to execute.
-     * @return The future for the response from this operation.
-     */
-    public <T> OrchestrateFuture<Iterable<KvObject<T>>> execute(final RelationFetchOperation<T> relationFetchOp);
-
-    /**
-     * Executes the specified {@code relationStoreOp} on the Orchestrate.io
-     * service.
-     *
-     * @param relationStoreOp The relation store operation to execute.
-     * @return The future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final RelationStoreOperation relationStoreOp);
-
-    /**
-     * Executes the specified {@code relationPurgeOp} on the Orchestrate.io
-     * service.
-     *
-     * @param relationPurgeOp The relation purge operation to execute.
-     * @return The future for the response from this operation.
-     */
-    public OrchestrateFuture<Boolean> execute(final RelationPurgeOperation relationPurgeOp);
-
-    /**
-     * Executes the specified {@code searchOp} on the Orchestrate.io service.
-     *
-     * @param searchOp The search operation to execute.
-     * @param <T> The type to deserialize the results to.
-     * @return The future for the response from this operation.
-     */
-    public <T> OrchestrateFuture<SearchResults<T>> execute(final SearchOperation<T> searchOp);
-
     /**
      * Stops the thread pool and closes all connections in use by all the
      * operations.
      *
      * @throws IOException If resources couldn't be stopped.
      */
-    public void stop() throws IOException;
+    public void close() throws IOException;
+
+    /**
+     * Delete all KV objects from a collection in the Orchestrate service.
+     *
+     * <p>Usage:</p>
+     * <pre>
+     * {@code
+     * client.deleteCollection("someCollection").get();
+     * }
+     * </pre>
+     *
+     * @param collection The name of collection to delete.
+     * @return The prepared request object.
+     */
+    public OrchestrateRequest<Boolean> deleteCollection(final String collection);
+
+    /**
+     * The resource for the event features in the Orchestrate API.
+     *
+     * @param collection The name of the collection.
+     * @param key The name of the key with events.
+     * @return The event resource.
+     */
+    public EventResource event(final String collection, final String key);
+
+    /**
+     * The resource for the KV features in the Orchestrate API.
+     *
+     * @param collection The name of the collection.
+     * @param key The name of a key.
+     * @return The KV resource.
+     */
+    public KvResource kv(final String collection, final String key);
+
+    /**
+     * The resource for the KV list features in the Orchestrate API.
+     *
+     * @param collection The name of the collection.
+     * @return The KV list resource.
+     */
+    public KvListResource listCollection(final String collection);
+
+    /**
+     * Health check that sends a ping to the Orchestrate service.
+     *
+     * @param collection The name of collection to ping.
+     * @throws IOException If the health check failed.
+     */
+    public void ping(final String collection) throws IOException;
+
+    /**
+     * The resource for the relation features in the Orchestrate API.
+     *
+     * @param collection The name of the collection.
+     * @param key The name of the key.
+     * @return The relation resource.
+     */
+    public RelationResource relation(final String collection, final String key);
+
+    /**
+     * The resource for the collection search features in the Orchestrate API.
+     *
+     * @param collection The name of the collection to search.
+     * @return The collection search resource.
+     */
+    public CollectionSearchResource searchCollection(final String collection);
 
 }

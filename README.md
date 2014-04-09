@@ -23,7 +23,7 @@ The client library is available on [Maven Central](http://search.maven.org/#sear
 
 ```groovy
 dependencies {
-    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.2.1'
+    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.3.0'
 }
 ```
 
@@ -33,7 +33,7 @@ dependencies {
 <dependency>
     <groupId>io.orchestrate</groupId>
     <artifactId>orchestrate-client</artifactId>
-    <version>0.2.1</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -53,9 +53,9 @@ You construct a client using the `API key` for your `Application` which can be
 ```java
 // An API key looks something like:
 //   3854bbd7-0a31-43b0-aa94-66236847a717
-Client client = new ClientBuilder("your api key").build();
+Client client = OrchestrateClient.builder("your api key").build();
 // or (for convenience)
-Client client = new HttpClient("your api key");
+Client client = new OrchestrateClient("your api key");
 ```
 
 #### Fetching Key-Value Data
@@ -64,49 +64,38 @@ For example, to fetch an object from a `collection` with a given `key` using
  the fully asynchronous API:
 
 ```java
-KvFetchOperation<MyObj> kvFetchOp =
-    new KvFetchOperation<MyObj>("myCollection", "someKey", MyObj.class);
-kvFetchOp.addListener(new OrchestrateFutureListener<KvObject<MyObj>>() {
-    @Override
-    public void onComplete(OrchestrateFuture<KvObject<MyObj>> future) {
-        try {
-            final KvObject<MyObj> kvObject = future.get();
-            // check the data exists
-            if (kvObject == null) {
-                System.out.println("'someKey' does not exist.");
-            } else {
-                MyObj data = kvObject.getValue();
-                // do something with the 'data'
-            }
-        } catch (Throwable t) {}
-    }
-    @Override
-    public void onException(OrchestrateFuture<KvObject<MyObj>> future) {
-        // handle errors
-    }
-});
-client.execute(kvFetchOp);
-```
+client.kv("someCollection", "someKey")
+      .get(DomainObject.class)
+      .on(new ResponseAdapter<KvObject<DomainObject>>() {
+          @Override
+          public void onFailure(final Throwable error) {
+              // handle errors
+          }
 
-(This API will improve significantly in the next release, [see here](https://github.com/orchestrate-io/orchestrate-java-client/issues/13).)
+          @Override
+          public void onSuccess(final KvObject<String> object) {
+              if (object == null) {
+                  // we received a 404, no KV object exists
+              }
+
+              DomainObject data = object.getValue();
+              // do something with the 'data'
+          }
+      });
+```
 
 Or, with the blocking API:
 
 ```java
-KvFetchOperation<MyObj> kvFetchOp =
-    new KvFetchOperation<MyObj>("myCollection", "someKey", MyObj.class);
+KvObject<DomainObject> object =
+        client.kv("someCollection", "someKey")
+              .get(DomainObject.class)
+              .get();
 
-// execute the operation
-Future<KvObject<MyObj>> future = client.execute(kvFetchOp);
-
-// wait for the result
-KvObject<MyObj> kvObject = future.get(3, TimeUnit.SECONDS);
-
-// check the data exists
-if (kvObject == null) {
-    System.out.println("'someKey' does not exist.");
+if (object == null) {
+    // we received a 404, no KV object exists
 } else {
-    MyObj data = kvObject.getValue();
+    DomainObject data = object.getValue();
     // do something with the 'data'
 }
 ```

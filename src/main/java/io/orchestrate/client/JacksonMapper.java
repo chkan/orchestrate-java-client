@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package io.orchestrate.client;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
-
-import static io.orchestrate.client.Preconditions.*;
+import lombok.NonNull;
 
 /**
  * A utility object to configure a Jackson JSON {@code ObjectMapper}.
@@ -71,8 +70,7 @@ public final class JacksonMapper {
      * @param objectMapper A Jackson JSON {@code ObjectMapper}.
      * @return A new {@code Builder} with the specified {@code ObjectMapper}.
      */
-    public static Builder builder(final ObjectMapper objectMapper) {
-        checkNotNull(objectMapper, "objectMapper");
+    public static Builder builder(final @NonNull ObjectMapper objectMapper) {
         return new Builder(objectMapper);
     }
 
@@ -111,8 +109,7 @@ public final class JacksonMapper {
          * @param module The {@code Module} to register.
          * @return This builder.
          */
-        public Builder registerModule(final Module module) {
-            checkNotNull(module, "module");
+        public Builder registerModule(final @NonNull Module module) {
             objectMapper.registerModule(module);
             return this;
         }
@@ -123,9 +120,10 @@ public final class JacksonMapper {
          * @param features The feature to enable in the mapper.
          * @return This builder.
          */
-        public Builder enable(final DeserializationFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder enable(final @NonNull DeserializationFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final DeserializationFeature feature : features) {
                 objectMapper.enable(feature);
@@ -139,9 +137,10 @@ public final class JacksonMapper {
          * @param features The feature to enable in the mapper.
          * @return This builder.
          */
-        public Builder enable(final MapperFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder enable(final @NonNull MapperFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             objectMapper.enable(features);
             return this;
@@ -153,9 +152,10 @@ public final class JacksonMapper {
          * @param features The feature to enable in the mapper.
          * @return This builder.
          */
-        public Builder enable(final SerializationFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder enable(final @NonNull SerializationFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final SerializationFeature feature : features) {
                 objectMapper.enable(feature);
@@ -169,9 +169,10 @@ public final class JacksonMapper {
          * @param features The features to enable in the mapper.
          * @return This builder.
          */
-        public Builder enable(final JsonGenerator.Feature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder enable(final @NonNull JsonGenerator.Feature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final JsonGenerator.Feature feature : features) {
                 objectMapper.getFactory().enable(feature);
@@ -185,9 +186,10 @@ public final class JacksonMapper {
          * @param features The features to enable in the mapper.
          * @return This builder.
          */
-        public Builder enable(final JsonParser.Feature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder enable(final @NonNull JsonParser.Feature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final JsonParser.Feature feature : features) {
                 objectMapper.getFactory().enable(feature);
@@ -201,9 +203,10 @@ public final class JacksonMapper {
          * @param features The features to disable in the mapper.
          * @return This builder.
          */
-        public Builder disable(final DeserializationFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder disable(final @NonNull DeserializationFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final DeserializationFeature feature : features) {
                 objectMapper.disable(feature);
@@ -217,9 +220,10 @@ public final class JacksonMapper {
          * @param features The features to disable in the mapper.
          * @return This builder.
          */
-        public Builder disable(final MapperFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder disable(final @NonNull MapperFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             objectMapper.disable(features);
             return this;
@@ -231,9 +235,10 @@ public final class JacksonMapper {
          * @param features The features to disable in the mapper.
          * @return This builder.
          */
-        public Builder disable(final SerializationFeature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder disable(final @NonNull SerializationFeature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final SerializationFeature feature : features) {
                 objectMapper.disable(feature);
@@ -247,9 +252,10 @@ public final class JacksonMapper {
          * @param features The features to disable in the mapper.
          * @return This builder.
          */
-        public Builder disable(final JsonGenerator.Feature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder disable(final @NonNull JsonGenerator.Feature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final JsonGenerator.Feature feature : features) {
                 objectMapper.getFactory().disable(feature);
@@ -263,9 +269,10 @@ public final class JacksonMapper {
          * @param features The features to disable in the mapper.
          * @return This builder.
          */
-        public Builder disable(final JsonParser.Feature... features) {
-            checkNotNull(features, "features");
-            checkArgument(features.length >= 1, "'features' cannot be empty.");
+        public Builder disable(final @NonNull JsonParser.Feature... features) {
+            if (features.length < 1) {
+                throw new IllegalArgumentException("'features' cannot be empty.");
+            }
 
             for (final JsonParser.Feature feature : features) {
                 objectMapper.getFactory().disable(feature);

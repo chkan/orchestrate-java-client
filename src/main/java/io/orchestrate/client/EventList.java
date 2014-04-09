@@ -15,14 +15,36 @@
  */
 package io.orchestrate.client;
 
-/**
- * An object that represents a failure to send a request from the {@code Client}.
- */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+import java.util.Iterator;
+import java.util.List;
 
-    ClientException(final Throwable t) {
-        super(t);
+/**
+ * A container for event objects.
+ */
+public class EventList<T> implements Iterable<Event<T>> {
+
+    /** The event objects from the request. */
+    private final List<Event<T>> events;
+
+    EventList(final List<Event<T>> events) {
+        assert (events != null);
+
+        this.events = events;
+    }
+
+    /**
+     * Returns the event objects from the response.
+     *
+     * @return The event objects.
+     */
+    public final Iterable<Event<T>> getEvents() {
+        return events;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Iterator<Event<T>> iterator() {
+        return events.iterator();
     }
 
 }

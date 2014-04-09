@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package io.orchestrate.client.dao;
 
 import io.orchestrate.client.*;
 
-import java.util.concurrent.Future;
-
-import static io.orchestrate.client.Preconditions.*;
+import static io.orchestrate.client.Preconditions.checkNotNull;
+import static io.orchestrate.client.Preconditions.checkNotNullOrEmpty;
 
 /**
  * A generic object for CRUD data access operations.
@@ -47,261 +46,185 @@ public abstract class GenericAsyncDao<T> implements AsyncDao<T> {
      *              runtime.
      */
     public GenericAsyncDao(final Client client, final String collection, final Class<T> clazz) {
-        this.client = checkNotNull(client, "client");
         this.collection = checkNotNullOrEmpty(collection, "collection");
+        this.client = checkNotNull(client, "client");
         this.clazz = checkNotNull(clazz, "clazz");
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvObject<T>> findOne(final String key) {
-        checkNotNullOrEmpty(key, "key");
-
-        final KvFetchOperation<T> kvFetchOp = new KvFetchOperation<T>(collection, key, clazz);
-        return client.execute(kvFetchOp);
+    public KvObject<T> findOne(final String key) {
+        return client.kv(collection, key).get(clazz).get();
     }
 
     /** {@inheritDoc} */
     @Override
-    public void findOne(final String key, final Iterable<OrchestrateFutureListener<KvObject<T>>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(listeners, "listeners");
-
-        final KvFetchOperation<T> kvFetchOp = new KvFetchOperation<T>(collection, key, clazz);
-        kvFetchOp.addListener(listeners);
-        client.execute(kvFetchOp);
+    public void findOne(final String key, final Iterable<ResponseListener<KvObject<T>>> listeners) {
+        client.kv(collection, key).get(clazz).on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvObject<T>> findOne(final String key, final KvMetadata metadata) {
-        checkNotNullOrEmpty(key, "key");
+    public KvObject<T> findOne(final String key, final KvMetadata metadata) {
         checkNotNull(metadata, "metadata");
-
-        final KvFetchOperation<T> kvFetchOp =
-                new KvFetchOperation<T>(collection, key, metadata, clazz);
-        return client.execute(kvFetchOp);
+        return findOne(key, metadata.getRef());
     }
 
     /** {@inheritDoc} */
     @Override
     public void findOne(
-            final String key, final KvMetadata metadata, final Iterable<OrchestrateFutureListener<KvObject<T>>> listeners) {
-        checkNotNullOrEmpty(key, "key");
+            final String key,
+            final KvMetadata metadata,
+            final Iterable<ResponseListener<KvObject<T>>> listeners) {
         checkNotNull(metadata, "metadata");
-        checkNotNull(listeners, "listeners");
-
-        final KvFetchOperation<T> kvFetchOp = new KvFetchOperation<T>(collection, key, metadata, clazz);
-        kvFetchOp.addListener(listeners);
-        client.execute(kvFetchOp);
+        findOne(key, metadata.getRef(), listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvObject<T>> findOne(final String key, final String ref) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNullOrEmpty(ref, "ref");
-
-        final KvFetchOperation<T> kvFetchOp =
-                new KvFetchOperation<T>(collection, key, ref, clazz);
-        return client.execute(kvFetchOp);
+    public KvObject<T> findOne(final String key, final String ref) {
+        return client.kv(collection, key).get(clazz, ref).get();
     }
 
     /** {@inheritDoc} */
     @Override
     public void findOne(
-            final String key, final String ref, final Iterable<OrchestrateFutureListener<KvObject<T>>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNullOrEmpty(ref, "ref");
-        checkNotNull(listeners, "listeners");
-
-        final KvFetchOperation<T> kvFetchOp = new KvFetchOperation<T>(collection, key, ref, clazz);
-        kvFetchOp.addListener(listeners);
-        client.execute(kvFetchOp);
+            final String key,
+            final String ref,
+            final Iterable<ResponseListener<KvObject<T>>> listeners) {
+        client.kv(collection, key).get(clazz, ref).on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvMetadata> save(final String key, final T value) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-
-        final KvStoreOperation kvStoreOp = new KvStoreOperation(collection, key, value);
-        return client.execute(kvStoreOp);
+    public KvMetadata save(final String key, final T value) {
+        return client.kv(collection, key).put(value).get();
     }
 
     /** {@inheritDoc} */
     @Override
     public void save(
-            final String key, final T value, final Iterable<OrchestrateFutureListener<KvMetadata>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-        checkNotNull(listeners, "listeners");
-
-        final KvStoreOperation kvStoreOp = new KvStoreOperation(collection, key, value);
-        kvStoreOp.addListener(listeners);
-        client.execute(kvStoreOp);
+            final String key,
+            final T value,
+            final Iterable<ResponseListener<KvMetadata>> listeners) {
+        client.kv(collection, key).put(value).on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvMetadata> save(final String key, final T value, final boolean ifAbsent) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, ifAbsent);
-        return client.execute(kvStoreOp);
+    public KvMetadata save(
+            final String key,
+            final T value,
+            final boolean ifAbsent) {
+        return client.kv(collection, key).ifAbsent(ifAbsent).put(value).get();
     }
 
     /** {@inheritDoc} */
     @Override
     public void save(
-            final String key, final T value, final boolean ifAbsent, final Iterable<OrchestrateFutureListener<KvMetadata>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-        checkNotNull(listeners, "listeners");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, ifAbsent);
-        kvStoreOp.addListener(listeners);
-        client.execute(kvStoreOp);
+            final String key,
+            final T value,
+            final boolean ifAbsent,
+            final Iterable<ResponseListener<KvMetadata>> listeners) {
+        client.kv(collection, key).ifAbsent(ifAbsent).put(value).on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvMetadata> save(final String key, final T value, final KvMetadata metadata) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
+    public KvMetadata save(
+            final String key,
+            final T value,
+            final KvMetadata metadata) {
         checkNotNull(metadata, "metadata");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, metadata);
-        return client.execute(kvStoreOp);
+        return save(key, value, metadata.getRef());
     }
 
     /** {@inheritDoc} */
     @Override
     public void save(
-            final String key, final T value, final KvMetadata metadata, final Iterable<OrchestrateFutureListener<KvMetadata>> listeners) {
-        checkNotNullOrEmpty(key, "key");
+            final String key,
+            final T value,
+            final KvMetadata metadata,
+            final Iterable<ResponseListener<KvMetadata>> listeners) {
         checkNotNull(metadata, "metadata");
-        checkNotNull(listeners, "listeners");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, metadata);
-        kvStoreOp.addListener(listeners);
-        client.execute(kvStoreOp);
+        save(key, value, metadata.getRef(), listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<KvMetadata> save(final String key, final T value, final String currentRef) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-        checkNotNullOrEmpty(currentRef, "currentRef");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, currentRef);
-        return client.execute(kvStoreOp);
+    public KvMetadata save(
+            final String key,
+            final T value,
+            final String currentRef) {
+        return client.kv(collection, key).ifMatch(currentRef).put(value).get();
     }
 
     /** {@inheritDoc} */
     @Override
     public void save(
-            final String key, final T value, final String currentRef, final Iterable<OrchestrateFutureListener<KvMetadata>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(value, "value");
-        checkNotNullOrEmpty(currentRef, "currentRef");
-        checkNotNull(listeners, "listeners");
-
-        final KvStoreOperation kvStoreOp =
-                new KvStoreOperation(collection, key, value, currentRef);
-        kvStoreOp.addListener(listeners);
-        client.execute(kvStoreOp);
+            final String key,
+            final T value,
+            final String currentRef,
+            final Iterable<ResponseListener<KvMetadata>> listeners) {
+        client.kv(collection, key).ifMatch(currentRef).put(value).on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<Boolean> delete(final String key) {
-        checkNotNullOrEmpty(key, "key");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key);
-        return client.execute(deleteOp);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public void delete(final String key, final Iterable<OrchestrateFutureListener<Boolean>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(listeners, "listeners");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key);
-        deleteOp.addListener(listeners);
-        client.execute(deleteOp);
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Future<Boolean> delete(final String key, final KvMetadata metadata) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(metadata, "metadata");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key, metadata);
-        return client.execute(deleteOp);
+    public Boolean delete(final String key) {
+        return client.kv(collection, key).delete().get();
     }
 
     /** {@inheritDoc} */
     @Override
     public void delete(
-            final String key, final KvMetadata metadata, final Iterable<OrchestrateFutureListener<Boolean>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNull(metadata, "metadata");
-        checkNotNull(listeners, "listeners");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key, metadata);
-        deleteOp.addListener(listeners);
-        client.execute(deleteOp);
+            final String key,
+            final Iterable<ResponseListener<Boolean>> listeners) {
+        client.kv(collection, key).delete().on(listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<Boolean> delete(final String key, final String currentRef) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNullOrEmpty(currentRef, "currentRef");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key, currentRef);
-        return client.execute(deleteOp);
+    public Boolean delete(final String key, final KvMetadata metadata) {
+        checkNotNull(metadata, "metadata");
+        return delete(key, metadata.getRef());
     }
 
     /** {@inheritDoc} */
     @Override
     public void delete(
-            final String key, final String currentRef, final Iterable<OrchestrateFutureListener<Boolean>> listeners) {
-        checkNotNullOrEmpty(key, "key");
-        checkNotNullOrEmpty(currentRef, "currentRef");
-        checkNotNull(listeners, "listeners");
-
-        final KvDeleteOperation deleteOp = new KvDeleteOperation(collection, key, currentRef);
-        deleteOp.addListener(listeners);
-        client.execute(deleteOp);
+            final String key,
+            final KvMetadata metadata,
+            final Iterable<ResponseListener<Boolean>> listeners) {
+        checkNotNull(metadata, "metadata");
+        delete(key, metadata.getRef(), listeners);
     }
 
     /** {@inheritDoc} */
     @Override
-    public Future<Boolean> deleteAll() {
-        final DeleteOperation deleteOp = new DeleteOperation(collection);
-        return client.execute(deleteOp);
+    public Boolean delete(final String key, final String currentRef) {
+        return client.kv(collection, key).ifMatch(currentRef).delete().get();
     }
 
     /** {@inheritDoc} */
     @Override
-    public void deleteAll(final Iterable<OrchestrateFutureListener<Boolean>> listeners) {
-        checkNotNull(listeners, "listeners");
+    public void delete(
+            final String key,
+            final String currentRef,
+            final Iterable<ResponseListener<Boolean>> listeners) {
+        client.kv(collection, key).ifMatch(currentRef).delete().on(listeners);
+    }
 
-        final DeleteOperation deleteOp = new DeleteOperation(collection);
-        deleteOp.addListener(listeners);
-        client.execute(deleteOp);
+    /** {@inheritDoc} */
+    @Override
+    public Boolean deleteCollection() {
+        return client.deleteCollection(collection).get();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void deleteCollection(final Iterable<ResponseListener<Boolean>> listeners) {
+        client.deleteCollection(collection).on(listeners);
     }
 
 }

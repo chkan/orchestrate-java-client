@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.orchestrate.client.integration;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 /**
- * An empty POJO used to represent an empty JSON object.
+ * A simple data access object framework to simplify building service components
+ * with the {@code OrchestrateClient}.
  */
-@ToString
-@EqualsAndHashCode
-@JsonIgnoreProperties(ignoreUnknown=true)
-public final class MyEmptyObject {
-}
+package io.orchestrate.client.dao;

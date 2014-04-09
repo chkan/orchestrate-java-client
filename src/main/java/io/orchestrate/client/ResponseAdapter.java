@@ -16,13 +16,23 @@
 package io.orchestrate.client;
 
 /**
- * An object that represents a failure to send a request from the {@code Client}.
+ * An abstract adapter class for receiving client responses.
+ *
+ * <p>The methods in this class are empty. This class exists as convenience for
+ * creating listener objects.
+ *
+ * @param <T> The deserializable type for the value of this response.
  */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+public abstract class ResponseAdapter<T> implements ResponseListener<T> {
 
-    ClientException(final Throwable t) {
-        super(t);
+    /** {@inheritDoc} */
+    @Override
+    public void onFailure(final Throwable error) {
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void onSuccess(final T object) {
     }
 
 }

@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.orchestrate.client;
+package io.orchestrate.client.itest;
+
+import org.junit.Test;
+
+import java.io.IOException;
 
 /**
- * An object that represents a failure to send a request from the {@code Client}.
+ * {@link io.orchestrate.client.OrchestrateClient#ping(String)}.
  */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+public final class ClientTest extends BaseClientTest {
 
-    ClientException(final Throwable t) {
-        super(t);
+    @Test
+    public void pingCheck() throws IOException {
+        client.ping(collection());
     }
 
 }

@@ -15,14 +15,24 @@
  */
 package io.orchestrate.client;
 
-/**
- * An object that represents a failure to send a request from the {@code Client}.
- */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-    ClientException(final Throwable t) {
-        super(t);
+/**
+ * The base resource for features in the Orchestrate API.
+ */
+abstract class BaseResource {
+
+    /** The Orchestrate client to make requests with. */
+    protected final OrchestrateClient client;
+    /** The object mapper used to deserialize JSON responses. */
+    protected final ObjectMapper mapper;
+
+    BaseResource(final OrchestrateClient client, final JacksonMapper mapper) {
+        assert (client != null);
+        assert (mapper != null);
+
+        this.client = client;
+        this.mapper = mapper.getMapper();
     }
 
 }

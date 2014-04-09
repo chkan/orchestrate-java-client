@@ -15,19 +15,20 @@ The builder allows you to configure settings like the initial size of the
  other tuning parameters.
 
 ```java
-Client client = new ClientBuilder("your api key")
-    .poolSize(50)
-    .maxPoolSize(100)
-    .build();
+int proc = Runtime.getRuntime().availableProcessors();
+Client client = OrchestrateClient.builder("your api key")
+        .poolSize(proc)
+        .maxPoolSize(proc * 20)
+        .build();
 ```
 
-You can read more about the `ClientBuilder` in the [javadocs](/javadoc/latest/io/orchestrate/client/ClientBuilder.html).
+You can read more about the `OrchestrateClient.Builder` in the [javadocs](/javadoc/latest/io/orchestrate/client/OrchestrateClient.Builder.html).
 
 ## <a name="json-mapping"></a> Custom JSON Mapping
 
 The Java client uses the excellent [Jackson JSON library](http://wiki.fasterxml.com/JacksonHome)
  to handle serializing your data to JSON before it's written to the
- Orchestrate.io service. Jackson has a very large array of configuration settings
+ Orchestrate service. Jackson has a very large array of configuration settings
  that allow you to tweak the way data is serialized and deserialized.
 
 The client exposes the ability to set Jackson's `ObjectMapper` from your code.
@@ -39,15 +40,17 @@ ObjectMapper mapper = new ObjectMapper();
 mapper.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
 mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-Client client = new ClientBuilder("your api key").mapper(mapper).build();
+Client client = OrchestrateClient.builder("your api key")
+		.mapper(mapper)
+		.build();
 
 // OR with greater configuration control
-Client client = new ClientBuilder("your api key")
-    .mapper(JacksonMapper.builder()
-        .registerModule(new JodaModule())
-        .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
-        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES))
-    .build();
+Client client = OrchestrateClient.builder("your api key")
+	    .mapper(JacksonMapper.builder()
+	        .registerModule(new JodaModule())
+	        .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
+	        .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES))
+	    .build();
 ```
 
 You can read more about the `JacksonMapper.Builder` in the

@@ -15,14 +15,25 @@
  */
 package io.orchestrate.client;
 
-/**
- * An object that represents a failure to send a request from the {@code Client}.
- */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+import org.glassfish.grizzly.http.HttpContent;
 
-    ClientException(final Throwable t) {
-        super(t);
-    }
+import java.io.IOException;
+
+/**
+ * A type converter that takes a HTTP response and converts it to type
+ * {@code T}.
+ *
+ * @param <T> The type to deserialize the HTTP response to.
+ */
+interface ResponseConverter<T> {
+
+    /**
+     * Convert the HTTP response body to the type {@code T}.
+     *
+     * @param response The HTTP response.
+     * @return The deserialized type.
+     * @throws IOException If the HTTP response could not be deserialized.
+     */
+    T from(final HttpContent response) throws IOException;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 the original author or authors.
+ * Copyright 2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public final class RequestException extends RuntimeException {
      * Returns the HTTP response ID from the failed request.
      *
      * <p>The response ID is used to help with debugging the query in the
-     * Orchestrate.io service.
+     * Orchestrate.io service.</p>
      *
      * @return The HTTP response ID from the failed request.
      */

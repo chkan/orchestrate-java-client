@@ -16,13 +16,26 @@
 package io.orchestrate.client;
 
 /**
- * An object that represents a failure to send a request from the {@code Client}.
+ * The listener for receiving responses for HTTP requests.
+ *
+ * @param <T> The deserializable type for the value of this response.
  */
-@SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+public interface ResponseListener<T> {
 
-    ClientException(final Throwable t) {
-        super(t);
-    }
+    /**
+     * Invoked when the request associated with the {@link OrchestrateRequest}
+     * has failed.
+     *
+     * @param error The exception thrown.
+     */
+    public void onFailure(final Throwable error);
+
+    /**
+     * Invoked when the request associated with the {@link OrchestrateRequest}
+     * has been completed.
+     *
+     * @param object The object from the response.
+     */
+    public void onSuccess(final T object);
 
 }

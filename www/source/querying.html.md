@@ -1,14 +1,12 @@
 The client API is designed around the concept of operations you can execute on
- the Orchestrate.io service. The client library is entirely _asynchronous_ and
- conforms to the [`java.util.concurrent.Future`](http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html)
- specification in the standard library.
+ the Orchestrate.io service. The client library is entirely _asynchronous_.
 
 Under the hood the client makes `HTTP` requests to the [REST API](http://docs.orchestrate.io/).
  All data is written to the platform as [`JSON`](http://json.org/) and the client
  will handle marshalling and unmarshalling the data into Java objects.
 
 Every Key/Value object has a unique identifier that represents the current
- version of the object, this information is known as the “ref”. The ref is a
+ version of the object, this information is known as the "ref". The ref is a
  content-based hash that identifies the specific version of a value. With it
  you can track the history of an object and retrieve old versions.
 
@@ -25,7 +23,7 @@ You construct a client using the `API key` for your `Application` which can be
 ```java
 // An API key looks something like:
 //   3854bbd7-0a31-43b0-aa94-66236847a717
-Client client = new ClientBuilder("your api key").build();
+Client client = new OrchestrateClient("your api key");
 ```
 
 A `Client` can be shared across threads and you only need to construct one per
@@ -38,10 +36,71 @@ Sometimes it's necessary to release the resources used by a `Client` and
  reconstruct it again at some later stage.
 
 ```java
-client.stop();
+client.close();
 
-// some method later, using #execute(...) will reallocate resources
-client.execute(...);
+// some method later, #get() a request will reallocate resources
+client.kv("someCollection", "someKey").get(String.class).get();
+```
+
+## <a name="a-sync-api"></a> Blocking vs Non-Blocking API
+
+Any Resource method that returns an OrchestrateRequest will initiate an asynchronous
+ http request to the Orchestrate service. For example:
+
+```java
+OrchestrateRequest request = client.kv("someCollection", "someKey").get(String.class)
+```
+
+The get(Class) method will return an OrchestrateRequest that has been initiated
+ asynchronously to the Orchestrate service. To handle the result, you will need to either
+ register a listener on that request, or block waiting for the response by calling the
+ `get` method on the request. This is what a typical non-blocking call might look like:
+
+```java
+client.kv("someCollection", "someKey")
+      .get(DomainObject.class)
+      .on(new ResponseAdapter<KvObject<DomainObject>>() {
+          @Override
+          public void onFailure(final Throwable error) {
+              // handle error condition
+          }
+
+          @Override
+          public void onSuccess(final DomainObject object) {
+              // do something with the result
+          }
+      });
+```
+
+A blocking call:
+
+```java
+DomainObject object = client.kv("someCollection", "someKey")
+      .get(DomainObject.class)
+      .get();
+```
+
+The final `get()` call will block until the result is returned. It takes an optional timeout
+ and defaults to 2.5 seconds.
+
+You can also add listeners, even if you ultimately call `get()` to block waiting for the
+result:
+
+```java
+DomainObject object = client.kv("someCollection", "someKey")
+      .get(DomainObject.class)
+      .on(new ResponseAdapter<KvObject<DomainObject>>() {
+          @Override
+          public void onFailure(final Throwable error) {
+              // handle error condition
+          }
+
+          @Override
+          public void onSuccess(final DomainObject object) {
+              // do something with the result
+          }
+      })
+      .get();
 ```
 
 ## <a name="key-value"></a> Key-Value
@@ -60,54 +119,46 @@ As mentioned above, all client operations are _asynchronous_.
 To fetch an object from a `collection` with a given `key`.
 
 ```java
-KvFetchOperation<MyObj> kvFetchOp = new KvFetchOperation<MyObj>(
-        "myCollection", "someKey", MyObject.class);
-
-// execute the operation
-Future<KvObject<MyObj>> kvObjectFuture = client.execute(kvFetchOp);
-
-// wait for the result
-KvObject<MyObj> kvObject = kvObjectFuture.get(3, TimeUnit.SECONDS);
+KvObject<DomainObject> object =
+        client.kv("someCollection", "someKey")
+              .get(DomainObject.class)
+              .get();
 
 // check the data exists
-if (result == null) {
+if (object == null) {
     System.out.println("'someKey' does not exist.";
 } else {
-    MyObj data = kvObject.getValue();
+    DomainObject data = kvObject.getValue();
     // do something with the 'data'
 }
 ```
 
 This example shows how to retrieve the value for a key from a collection and
  deserialize the result JSON to a [POJO](http://en.wikipedia.org/wiki/Plain_Old_Java_Object)
- called `MyObj`.
+ called `object`.
 
 ### <a name="list-data"></a> List Data
 
 To list objects in a `collection`.
 
 ```java
-KvListOperation<MyObj> kvListOp =
-        new KvListOperation<MyObj>("myCollection", MyObj.class);
+KvList<DomainObject> results =
+        client.listCollection("someCollection")
+              .get(DomainObject.class)
+              .get();
 
-// execute the operation
-Future<KvList<MyObj>> kvListFuture = client.execute(kvListOp);
-
-// wait for the result
-KvList<MyObj> results = kvListFuture.get(3, TimeUnit.SECONDS);
-
-for (KvObject<MyObj> kvObject : results) {
+for (KvObject<DomainObject> kvObject : results) {
     // do something with the object
     System.out.println(kvObject);
 }
 ```
 
 By default, only the first 10 objects are retrieved. This can be increased up to
- 100 per request in the `KvListOperation` constructor.
+ 100 per request in `KvListResource#limit(int)` method.
 
-The `KvList` object returns a `next` field with the URL of the next group of
- objects (or `null` if there are no more objects), this can be used to paginate
- through the collection.
+The `KvList` object returns a `next` field with a prepared request with the next
+ group of objects (or `null` if there are no more objects), this can be used to
+  paginate through the collection.
 
 ### <a name="store-data"></a> Store Data
 
@@ -115,22 +166,18 @@ To store an object from a `collection` to a given `key`.
 
 ```java
 // create some data to store
-MyObj myObj = new MyObj(...);
+DomainObject obj = new DomainObject(); // a POJO
 
-KvStoreOperation kvStoreOp =
-    new KvStoreOperation("myCollection", "someKey", myObj);
-
-// execute the operation
-Future<KvMetadata> kvFuture = client.execute(kvStoreOp);
-
-// wait for the result
-KvMetadata kvMetadata = kvFuture.get(3, TimeUnit.SECONDS);
+final KvMetadata kvMetadata =
+        client.kv("someCollection", "someKey")
+              .put(obj)
+              .get();
 
 // print the 'ref' for the stored data
 System.out.println(kvMetadata.getRef());
 ```
 
-This example shows how to store a value for a key to a collection, `myObj` is
+This example shows how to store a value for a key to a collection, `obj` is
  serialized to JSON by the client before writing the data.
 
 The `KvMetadata` returned by the store operation contains information about
@@ -144,14 +191,18 @@ The `ref` metadata returned from a store operation is important, it allows
 
 ```java
 // update 'myObj' if the 'currentRef' matches the ref on the server
-String currentRef = kvMetadata.getRef();
-KvStoreOperation kvStoreOp =
-    new KvStoreOperation("myCollection", "someKey", myObj, currentRef);
+KvMetadata kvMetadata =
+        client.kv("someCollection", "someKey")
+              .ifMatch("someRef")
+              .put(obj)
+              .get();
 
-// store the new 'myObj' data if 'someKey' does not already exist
-boolean ifAbsent = true;
-KvStoreOperation kvStoreOp =
-    new KvStoreOperation("myCollection", "someKey", myObj, ifAbsent);
+// store the new 'obj' data if 'someKey' does not already exist
+KvMetadata kvMetadata =
+        client.kv("someCollection", "someKey")
+              .ifAbsent()
+              .put(obj)
+              .get();
 ```
 
 This type of store operation is very useful in high write concurrency
@@ -163,15 +214,11 @@ This type of store operation is very useful in high write concurrency
 To delete a `collection` of objects.
 
 ```java
-DeleteOperation deleteOp = new DeleteOperation("myCollection");
+boolean result =
+        client.deleteCollection(collection)
+              .get();
 
-// execute the operation
-Future<Boolean> deleteFuture = client.execute(deleteOp);
-
-// wait for the result
-Boolean deleted = deleteFuture.get(3, TimeUnit.SECONDS);
-
-if (deleted) {
+if (result) {
     System.out.println("Successfully deleted the collection.");
 }
 ```
@@ -179,17 +226,13 @@ if (deleted) {
 To delete an object by `key` in a `collection`.
 
 ```java
-KvDeleteOperation kvDeleteOp =
-        new KvDeleteOperation("myCollection", "someKey");
+boolean result =
+        client.kv("someCollection", "someKey")
+              .delete()
+              .get();
 
-// execute the operation
-Future<Boolean> deleteFuture = client.execute(deleteOp);
-
-// wait for the result
-Boolean deleted = deleteFuture.get(3, TimeUnit.SECONDS);
-
-if (deleted) {
-    System.out.println("Successfully deleted a key.");
+if (result) {
+    System.out.println("Successfully deleted the collection.");
 }
 ```
 
@@ -201,8 +244,11 @@ Similar to a [conditional store](#conditional-store) operation, a conditional
 
 ```java
 String currentRef = kvMetadata.getRef();
-KvDeleteOperation kvDeleteOp =
-    new KvDeleteOperation("myCollection", "someKey", currentRef);
+boolean result =
+        client.kv("someCollection", "someKey")
+              .ifMatch(currentRef)
+              .delete()
+              .get();
 
 // same as above
 ```
@@ -222,10 +268,12 @@ Nevertheless there will be times when you may need to delete an object and purge
  all "ref history" for the object.
 
 ```java
-KvPurgeOperation kvPurgeOp = new KvPurgeOperation("myCollection", "someKey");
-Future<Boolean> purgeFuture = client.execute(kvPurgeOp);
-Boolean purged = purgeFuture.get(3, TimeUnit.SECONDS);
-if (purged) {
+boolean result =
+        client.kv("someCollection", "someKey")
+              .delete(Boolean.TRUE)
+              .get();
+
+if (result) {
     System.out.println("Successfully purged the key.");
 }
 ```
@@ -247,17 +295,13 @@ The query language used to perform searches is the familiar
 The simplest search query is a `*` query.
 
 ```java
-// if you don't provide a query, it defaults to '*'
-SearchOperation<MyObj> searchOp = new SearchOperation(
-        "myCollection", MyObj.class);
+String luceneQuery = "*";
+SearchResults<DomainObject> results =
+        client.searchCollection("someCollection")
+              .get(DomainObject.class, luceneQuery)
+              .get();
 
-// execute the operation
-Future<SearchResults<MyObj>> searchFuture = client.execute(searchOp);
-
-// wait for the result
-SearchResults<MyObj> searchResults = searchFuture.get(3, TimeUnit.SECONDS);
-
-for (Result<MyObj> result : searchResults) {
+for (Result<DomainObject> result : results) {
     // do something with the search results
     System.out.println(result.getScore());
 }
@@ -266,19 +310,20 @@ for (Result<MyObj> result : searchResults) {
 A more complex search query could look like this:
 
 ```java
-SearchOperation<MyObj> searchOp = SearchOperation
-    .builder("myCollection", MyObj.class)
-    .query("*")
-    .limit(50)
-    .offset(10)
-    .build();
+String luceneQuery = "*";
+SearchResults<DomainObject> results =
+        client.searchCollection("someCollection")
+              .limit(50)
+              .offset(10)
+              .get(DomainObject.class, luceneQuery)
+              .get();
 
 // same as above
 ```
 
-The collection called `myCollection` will be searched with the query `*` and
+The collection called `someCollection` will be searched with the query `*` and
  up to `50` results may be returned with a starting offset of `10` from the most
- relevant. The results will be deserialized to `MyObj`s.
+ relevant. The results will be deserialized to `DomainObject`s.
 
 ### Note
 
@@ -286,7 +331,7 @@ Search results are currently limited to no more than __100__ results for each
  query, if this limit is not suitable for you please let us know.
 
 By default, a search operation will only return up to __10__ results, use the
- `SearchOperation.Builder` as shown above to retrieve more results for a query.
+ `CollectionSearchResource` as shown above to retrieve more results for a query.
 
 ### Some Example Queries
 
@@ -294,16 +339,25 @@ Here are some query examples demonstrating the Lucene query syntax.
 
 ```java
 // keyword matching
-SearchOperation<MyObj> searchOp = new SearchOperation<String>(
-    "myCollection", MyObj.class, "title:\"foo bar\"");
+String luceneQuery = "title:\"foo bar\"";
+SearchResults<DomainObject> results =
+        client.searchCollection("someCollection")
+              .get(DomainObject.class, luceneQuery)
+              .get();
 
 // proximity matching
-SearchOperation<MyObj> searchOp = new SearchOperation<String>(
-    "myCollection", MyObj.class, "\"foo bar\"~4");
+String luceneQuery = "\"foo bar\"~4";
+SearchResults<DomainObject> results =
+        client.searchCollection("someCollection")
+              .get(DomainObject.class, luceneQuery)
+              .get();
 
 // range searches
-SearchOperation<MyObj> searchOp = new SearchOperation<String>(
-    "myCollection", MyObj.class, "year_of_birth:[20020101 TO 20030101]");
+String luceneQuery = "year_of_birth:[20020101 TO 20030101]";
+SearchResults<DomainObject> results =
+        client.searchCollection("someCollection")
+              .get(DomainObject.class, luceneQuery)
+              .get();
 ```
 
 Ignore the backslashes in the first two examples, this is necessary to escape
@@ -325,15 +379,11 @@ To fetch events belonging to a `key` in a specific `collection` of a specific
  `type`, where type could be a name like "comments" or "feed".
 
 ```java
-EventFetchOperation<MyObject> eventFetchOp =
-        new EventFetchOperation<MyObject>(
-        "myCollection", "someKey", "type", MyObject.class);
-
-// execute the operation
-Future<Iterable<Event<MyObject>>> eventFuture = client.execute(eventFetchOp);
-
-// wait for the result
-Iterable<Event<MyObject>> events = eventFuture.get(3, TimeUnit.SECONDS);
+Iterable<Event<DomainObject>> events =
+        client.event("someCollection", "someKey")
+              .type("eventType")
+              .get(DomainObject.class)
+              .get();
 
 // iterate on the events, they will be ordered by the most recent value
 for (Event<MyObject> event : events) {
@@ -345,9 +395,13 @@ You can also supply an optional `start` and `end` timestamp to retrieve a subset
  of the events.
 
 ```java
-EventFetchOperation<MyObject> eventFetchOp =
-    new EventFetchOperation<MyObject>(
- "myCollection", "someKey", "eventType", 0L, 13865200L, MyObject.class);
+Iterable<Event<DomainObject>> results =
+        client.event("someCollection", "someKey")
+              .type("eventType")
+              .start(0L)
+              .end(13865200L)
+              .get(DomainObject.class)
+              .get();
 
 // same as above
 ```
@@ -360,18 +414,14 @@ You can think of storing an event like adding to the front of a time-ordered
 To store an event to a `key` in a `collection` with a specific `type`.
 
 ```java
-MyObject myObj = new MyObject(..);
+DomainObject obj = new DomainObject(); // a POJO
+boolean result =
+        client.event("someCollection", "someKey")
+              .type("eventType")
+              .put(obj)
+              .get();
 
-EventStoreOperation eventStoreOp = new EventStoreOperation(
-        "myCollection", "someKey", "eventType", myObj);
-
-// execute the operation
-Future<Boolean> eventStoreFuture = client.execute(eventStoreOp);
-
-// wait for the result
-Boolean stored = eventStoreFuture.get(3, TimeUnit.SECONDS);
-
-if (stored) {
+if (result) {
     System.out.println("Successfully stored an event.");
 }
 ```
@@ -380,9 +430,12 @@ You can also supply an optional `timestamp` for the event, this will be used
  instead of the timestamp of the write operation.
 
 ```java
-EventStoreOperation eventStoreOp =
-    new EventStoreOperation(
-    "myCollection", "someKey", "eventType", myObj, 13865200L);
+DomainObject obj = new DomainObject(); // a POJO
+boolean result =
+        client.event("someCollection", "someKey")
+              .type("eventType")
+              .put(obj, 13865200L)
+              .get();
 
 // same as above
 ```
@@ -393,7 +446,7 @@ While building an application it's possible that you'll want to make association
  between particular objects of the same type or even objects of completely
  different types that share a property of some kind.
 
-It's this sort of data problem that makes the graph features in Orchestrate.io
+It's this sort of data problem that makes the graph features in Orchestrate
  shine, if you're building a socially-aware application you might want to
  add relations between data like "friend" or "follows".
 
@@ -407,14 +460,10 @@ To fetch objects related to the `key` in the `collection` based on a
  relationship or number of `relation`s.
 
 ```java
-RelationFetchOperation relationFetchOp =
-    new RelationFetchOperation("myCollection", "someKey", "relation");
-
-// execute the operation
-Future<Iterable<KvObject<String>>> future = client.execute(relationFetchOp);
-
-// wait for the result
-Iterable<KvObject<String>> results = future.get(3, TimeUnit.SECONDS);
+Iterable<KvObject<DomainObject>> results =
+        client.relation("someCollection", "someKey")
+              .get(DomainObject.class, "someKind")
+              .get();
 
 for (KvObject<String> result : results) {
     // the raw JSON string
@@ -426,19 +475,13 @@ Imagine that we'd like to know the `follow`ers of `users` that are `friend`s of
  the user `tony`. This kind of query could look like this.
 
 ```java
-RelationFetchOperation relationFetchOp =
-    new RelationFetchOperation("users", "tony", "friend", "follow");
+Iterable<KvObject<DomainObject>> results =
+        client.relation("someCollection", "someKey")
+              .get(DomainObject.class, "friend", "follow")
+              .get();
 
 // same as above
 ```
-
-#### Note
-
-At the moment, you will always get the raw JSON string back from a relation
- query because relations can span collections, it's not possible to map the
- objects back to their Java types automatically.
-
-We may lift this restriction in a future release of the client.
 
 ### <a name="store-relation"></a> Store Relation
 
@@ -446,17 +489,13 @@ To store a `relation` between one `key` to another `key` within the same
  `collection` or across different `collection`s.
 
 ```java
-RelationStoreOperation relationStoreOp =
-    new RelationStoreOperation(
-    "myCollection", "someKey", "relation", "toCollection", "toSomeKey");
+boolean result =
+        client.relation("sourceCollection", "sourceKey")
+              .to("destCollection", "destKey")
+              .put("someKind")
+              .get();
 
-// execute the operation
-Future<Boolean> relationStoreFuture = client.execute(relationStoreOp);
-
-// wait for the result
-Boolean stored = relationStoreFuture.get(3, TimeUnit.SECONDS);
-
-if (stored) {
+if (result) {
     System.out.println("Successfully stored the relation.");
 }
 ```
@@ -475,17 +514,13 @@ To purge a `relation` between one `key` to another `key` within the same
  `collection` or across different `collection`s.
 
 ```java
-RelationPurgeOperation relationPurgeOp =
-    new RelationPurgeOperation(
-    "myCollection", "someKey", "relation", "toCollection", "toSomeKey");
+boolean result =
+        client.relation("sourceCollection", "sourceKey")
+              .to("destCollection", "destKey")
+              .purge("someKind")
+              .get();
 
-// execute the operation
-Future<Boolean> relationPurgeFuture = client.execute(relationPurgeOp);
-
-// wait for the result
-Boolean purged = relationPurgeFuture.get(3, TimeUnit.SECONDS);
-
-if (purged) {
+if (result) {
     System.out.println("Successfully purged the relation.");
 }
 ```

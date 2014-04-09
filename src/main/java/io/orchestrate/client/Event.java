@@ -59,7 +59,7 @@ public class Event<T> {
      *
      * @return The raw JSON value of this event.
      */
-    public final String rawValue() {
+    public final String getRawValue() {
         return rawValue;
     }
 

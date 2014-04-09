@@ -66,4 +66,53 @@ public final class Preconditions {
         }
     }
 
+    /**
+     * Checks that the {@code value} is not negative.
+     *
+     * @param value The object to perform the check on.
+     * @param paramName The name of the parameter that can't be negative.
+     * @return The value that was checked.
+     */
+    public static int checkNotNegative(final int value, final String paramName) {
+        if (value < 0) {
+            final String msg = String.format("'%s' cannot be negative.", paramName);
+            throw new IllegalArgumentException(msg);
+        }
+        return value;
+    }
+
+    /**
+     +     * Checks that the {@code value} is not negative.
+     +     *
+     +     * @param value The object to perform the check on.
+     +     * @param paramName The name of the parameter that can't be negative.
+     +     * @return The value that was checked.
+     +     */
+    public static long checkNotNegative(final long value, final String paramName) {
+        if (value < 0) {
+            final String msg = String.format("'%s' cannot be negative.", paramName);
+            throw new IllegalArgumentException(msg);
+        }
+        return value;
+    }
+
+    /**
+     * Checks that the {@code values} are not empty.
+     *
+     * @param values The values to check.
+     * @param paramName The name of the parameter that is to be checked.
+     * @param itemName The name of an item from the values.
+     * @return The value that was checked.
+     */
+    public static String[] checkNoneEmpty(final String[] values, final String paramName, final String itemName) {
+        if (values == null || values.length < 1) {
+            final String msg = String.format("'%s' cannot be empty.", paramName);
+            throw new IllegalArgumentException(msg);
+        }
+        for (String item : values) {
+            checkNotNullOrEmpty(item, itemName);
+        }
+        return values;
+    }
+
 }

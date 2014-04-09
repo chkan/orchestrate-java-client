@@ -24,7 +24,6 @@ import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -88,14 +87,7 @@ public class RelationResource extends BaseResource {
                 "'destCollection' and 'destKey' not valid in GET query.");
         checkNoneEmpty(kinds, "kinds", "kind");
 
-        final UEncoder urlEncoder = new UEncoder();
-        String uri = urlEncoder.encodeURL(sourceCollection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(sourceKey))
-                .concat("/relations");
-        for (final String kind : kinds) {
-            uri = uri.concat("/").concat(urlEncoder.encodeURL(kind));
-        }
+        final String uri = client.uri(sourceCollection, sourceKey, "relations").concat("/"+client.encode(kinds));
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -156,16 +148,9 @@ public class RelationResource extends BaseResource {
         String localDestCollection = invert ? sourceCollection : destCollection;
         String localDestKey = invert ? sourceKey : destKey;
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(localSourceCollection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localSourceKey))
-                .concat("/relation/")
-                .concat(urlEncoder.encodeURL(kind))
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localDestCollection))
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localDestKey));
+        final String uri = client.uri(
+                localSourceCollection, localSourceKey, "relation", kind,
+                localDestCollection, localDestKey);
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.PUT)
@@ -209,16 +194,9 @@ public class RelationResource extends BaseResource {
         String localDestCollection = invert ? sourceCollection : destCollection;
         String localDestKey = invert ? sourceKey : destKey;
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(localSourceCollection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localSourceKey))
-                .concat("/relation/")
-                .concat(urlEncoder.encodeURL(kind))
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localDestCollection))
-                .concat("/")
-                .concat(urlEncoder.encodeURL(localDestKey));
+        final String uri = client.uri(
+                localSourceCollection, localSourceKey, "relation", kind,
+                localDestCollection, localDestKey);
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.DELETE)

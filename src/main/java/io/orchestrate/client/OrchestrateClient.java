@@ -52,6 +52,13 @@ public class OrchestrateClient implements Client {
     /** The socket transport for HTTP messages. */
     private final NIOTransport transport;
 
+    private static final ThreadLocal<UEncoder> ENCODER_HOLDER = new ThreadLocal<UEncoder>(){
+        @Override
+        protected UEncoder initialValue() {
+            return new UEncoder();
+        }
+    };
+
     /**
      * Create a new {@code client} with the specified {@code apiKey} and default
      * {@code JacksonMapper}.
@@ -188,8 +195,7 @@ public class OrchestrateClient implements Client {
     public OrchestrateRequest<Boolean> deleteCollection(final String collection) {
         checkNotNullOrEmpty(collection, "collection");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection);
+        final String uri = uri(collection);
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.DELETE)
@@ -450,4 +456,40 @@ public class OrchestrateClient implements Client {
 
     }
 
+    String uri(String... segments) {
+        int length = 3 + segments.length;
+        for(String segment:segments) {
+            length += segment.length();
+        }
+
+        UEncoder encoder = ENCODER_HOLDER.get();
+
+        StringBuilder buff = new StringBuilder(length).append("/v0");
+        for(String segment:segments) {
+            buff.append('/').append(encoder.encodeURL(segment));
+        }
+        return buff.toString();
+    }
+
+    String encode(String... segments) {
+        UEncoder encoder = ENCODER_HOLDER.get();
+        if(segments.length == 1){
+            return encoder.encodeURL(segments[0]);
+        }
+
+        int length = segments.length - 1;
+        for(String segment:segments) {
+            length += segment.length();
+        }
+
+        StringBuilder buff = new StringBuilder(length);
+        for(int i=0; i<segments.length; i++) {
+            if(i != 0) {
+                buff.append('/');
+            }
+            buff.append(encoder.encodeURL(segments[i]));
+        }
+
+        return buff.toString();
+    }
 }

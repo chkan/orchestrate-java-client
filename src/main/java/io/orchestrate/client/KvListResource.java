@@ -21,7 +21,6 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -84,14 +83,13 @@ public class KvListResource extends BaseResource {
     public <T> OrchestrateRequest<KvList<T>> get(final @NonNull Class<T> clazz) {
         checkArgument(!inclusive || startKey != null, "'inclusive' requires 'startKey' for request.");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection);
+        final String uri = client.uri(collection);
         String query = "limit=".concat(limit + "");
         if (startKey != null) {
             final String keyName = (inclusive) ? "startKey" : "afterKey";
             query = query
                     .concat('&' + keyName + '=')
-                    .concat(urlEncoder.encodeURL(startKey));
+                    .concat(client.encode(startKey));
         }
 
         final HttpContent packet = HttpRequestPacket.builder()

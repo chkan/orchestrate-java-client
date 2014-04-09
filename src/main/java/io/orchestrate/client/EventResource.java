@@ -21,7 +21,6 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
 
 import javax.annotation.Nullable;
@@ -90,12 +89,7 @@ public class EventResource extends BaseResource {
         checkNotNull(clazz, "clazz");
         checkNotNull(type, "type");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(key))
-                .concat("/events/")
-                .concat(urlEncoder.encodeURL(type));
+        final String uri = client.uri(collection, key, "events", type);
 
         final HttpRequestPacket.Builder httpHeaderBuilder = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -186,12 +180,7 @@ public class EventResource extends BaseResource {
             throw new RuntimeException(e); // FIXME
         }
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(key))
-                .concat("/events/")
-                .concat(urlEncoder.encodeURL(type));
+        final String uri = client.uri(collection, key, "events", type);
 
         final HttpRequestPacket.Builder httpHeaderBuilder = HttpRequestPacket.builder()
                 .method(Method.PUT)

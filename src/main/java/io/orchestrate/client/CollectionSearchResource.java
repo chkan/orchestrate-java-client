@@ -20,7 +20,6 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -82,14 +81,13 @@ public class CollectionSearchResource extends BaseResource {
         checkNotNull(clazz, "clazz");
         checkNotNullOrEmpty(luceneQuery, "luceneQuery");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String query = "query=".concat(urlEncoder.encodeURL(luceneQuery))
+        final String query = "query=".concat(client.encode(luceneQuery))
                 .concat("&limit=").concat(limit + "")
                 .concat("&offset=").concat(offset + "");
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
-                .uri(urlEncoder.encodeURL(collection))
+                .uri(client.uri(collection))
                 .query(query)
                 .build()
                 .httpContentBuilder()

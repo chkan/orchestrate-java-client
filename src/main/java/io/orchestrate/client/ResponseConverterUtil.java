@@ -39,13 +39,22 @@ final class ResponseConverterUtil {
         final String collection = path.get("collection").asText();
         final String key = path.get("key").asText();
         final String ref = path.get("ref").asText();
-        final KvMetadata metadata = new KvMetadata(collection, key, ref);
 
         // parse result structure (e.g.):
         // {"path":{...},"value":{}}
         final JsonNode valueNode = jsonNode.get("value");
 
-        // TODO Is there value in always having the raw string value available on the KvObject?
+        return jsonToKvObject(mapper, valueNode, clazz, collection, key, ref);
+    }
+
+    public static <T> KvObject<T> jsonToKvObject(ObjectMapper mapper, JsonNode valueNode, Class<T> clazz,
+                                                 String collection, String key, String ref) throws IOException {
+        assert (mapper != null);
+        assert (valueNode != null);
+        assert (clazz != null);
+
+        final KvMetadata metadata = new KvMetadata(collection, key, ref);
+
         final String rawValue = mapper.writeValueAsString(valueNode);
 
         @SuppressWarnings("unchecked")
@@ -53,7 +62,7 @@ final class ResponseConverterUtil {
                 ? (T) rawValue
                 : valueNode.traverse(mapper).readValueAs(clazz);
 
+        // TODO Is there value in always having the raw string value available ON the KvObject?
         return new KvObject<T>(metadata, value, rawValue);
     }
-
 }

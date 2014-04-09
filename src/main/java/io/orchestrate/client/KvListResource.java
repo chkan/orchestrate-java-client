@@ -25,7 +25,6 @@ import org.glassfish.grizzly.http.Method;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -33,7 +32,6 @@ import java.util.List;
 import static io.orchestrate.client.Preconditions.checkArgument;
 import static io.orchestrate.client.Preconditions.checkNotNegative;
 import static io.orchestrate.client.Preconditions.checkNotNullOrEmpty;
-import static io.orchestrate.client.ResponseConverterUtil.jsonToKvObject;
 
 /**
  * The resource for the KV list features in the Orchestrate API.
@@ -106,8 +104,7 @@ public class KvListResource extends BaseResource {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 assert (status == 200);
 
-                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
-                final JsonNode jsonNode = mapper.readTree(json);
+                final JsonNode jsonNode = toJsonNode(response);
 
                 final OrchestrateRequest<KvList<T>> next;
                 if (jsonNode.has("next")) {
@@ -129,7 +126,7 @@ public class KvListResource extends BaseResource {
 
                 final Iterator<JsonNode> iter = jsonNode.get("results").elements();
                 while (iter.hasNext()) {
-                    results.add(jsonToKvObject(mapper, iter.next(), clazz));
+                    results.add(toKvObject(iter.next(), clazz));
                 }
 
                 return new KvList<T>(results, count, next);

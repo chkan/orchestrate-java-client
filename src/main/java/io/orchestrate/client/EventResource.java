@@ -26,7 +26,6 @@ import org.glassfish.grizzly.memory.ByteBufferWrapper;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -113,8 +112,7 @@ public class EventResource extends BaseResource {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 assert (status == 200);
 
-                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
-                final JsonNode jsonNode = mapper.readTree(json);
+                final JsonNode jsonNode = toJsonNode(response);
 
                 final int count = jsonNode.get("count").asInt();
                 final List<Event<T>> events = new ArrayList<Event<T>>(count);
@@ -128,15 +126,13 @@ public class EventResource extends BaseResource {
                     final JsonNode valueNode = result.get("value");
                     final String rawValue = valueNode.toString();
 
-                    @SuppressWarnings("unchecked")
-                    final T value = (clazz == String.class)
-                            ? (T) rawValue
-                            : mapper.readValue(rawValue, clazz);
+                    final T value = toDomainObject(rawValue, clazz);
 
                     events.add(new Event<T>(value, rawValue, timestamp));
                 }
                 return new EventList<T>(events);
             }
+
         });
     }
 
@@ -171,14 +167,7 @@ public class EventResource extends BaseResource {
         checkNotNull(type, "type");
         checkArgument(start == null && end == null, "'start' and 'end' not allowed with PUT requests.");
 
-        final byte[] content;
-        try {
-            content = (value instanceof String)
-                    ? ((String) value).getBytes("UTF-8")
-                    : mapper.writeValueAsBytes(value);
-        } catch (final Exception e) {
-            throw new RuntimeException(e); // FIXME
-        }
+        final byte[] content = toJsonBytes(value);
 
         final String uri = client.uri(collection, key, "events", type);
 

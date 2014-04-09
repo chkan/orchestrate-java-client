@@ -156,17 +156,7 @@ public class KvResource extends BaseResource {
                     return null;
                 }
 
-                final String json = response.getContent().toStringContent();
-                final String ref  = header.getHeader(Header.ETag)
-                        .replace("\"", "")
-                        .replaceFirst("-gzip$", "");
-
-                @SuppressWarnings("unchecked")
-                final T value = (clazz == String.class)
-                        ? (T) json
-                        : mapper.readValue(json, clazz);
-
-                return new KvObject<T>(collection, key, ref, value, json);
+                return toKvObject(response, collection, key, clazz);
             }
         });
     }
@@ -226,14 +216,7 @@ public class KvResource extends BaseResource {
      * @return The prepared put request.
      */
     public OrchestrateRequest<KvMetadata> put(final @NonNull Object value) {
-        final byte[] content;
-        try {
-            content = (value instanceof String)
-                    ? ((String) value).getBytes("UTF-8")
-                    : mapper.writeValueAsBytes(value);
-        } catch (final Exception e) {
-            throw new RuntimeException(e); // FIXME
-        }
+        final byte[] content = toJsonBytes(value);
 
         final String uri = client.uri(collection, key);
 

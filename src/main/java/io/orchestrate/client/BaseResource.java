@@ -15,7 +15,14 @@
  */
 package io.orchestrate.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.glassfish.grizzly.http.HttpContent;
+import org.glassfish.grizzly.http.util.Header;
+import org.glassfish.grizzly.utils.BufferInputStream;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * The base resource for features in the Orchestrate API.
@@ -27,6 +34,8 @@ abstract class BaseResource {
     /** The object mapper used to deserialize JSON responses. */
     protected final ObjectMapper mapper;
 
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+
     BaseResource(final OrchestrateClient client, final JacksonMapper mapper) {
         assert (client != null);
         assert (mapper != null);
@@ -35,4 +44,38 @@ abstract class BaseResource {
         this.mapper = mapper.getMapper();
     }
 
+    protected byte[] toJsonBytes(Object value) {
+        try {
+            return (value instanceof String)
+                    ? ((String) value).getBytes(UTF8)
+                    : mapper.writeValueAsBytes(value);
+        } catch (final Exception e) {
+            throw new RuntimeException(e); // FIXME
+        }
+    }
+
+    protected JsonNode toJsonNode(HttpContent response) throws IOException {
+        return mapper.readTree(new BufferInputStream(response.getContent()));
+    }
+
+    protected <T> KvObject<T> toKvObject(JsonNode result, Class<T> clazz) throws IOException {
+        return ResponseConverterUtil.jsonToKvObject(mapper, result, clazz);
+    }
+
+    protected <T> KvObject<T> toKvObject(HttpContent response, String collection, String key,
+                                         Class<T> clazz) throws IOException {
+        final JsonNode valueNode = toJsonNode(response);
+        final String ref = response.getHttpHeader().getHeader(Header.ETag)
+                .replace("\"", "")
+                .replaceFirst("-gzip$", "");
+
+        return ResponseConverterUtil.jsonToKvObject(mapper, valueNode, clazz, collection, key, ref);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T toDomainObject(String rawValue, Class<T> clazz) throws IOException {
+        return (clazz == String.class)
+                ? (T) rawValue
+                : mapper.readValue(rawValue, clazz);
+    }
 }

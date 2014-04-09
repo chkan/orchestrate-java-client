@@ -26,12 +26,10 @@ import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
 import static io.orchestrate.client.Preconditions.*;
-import static io.orchestrate.client.ResponseConverterUtil.jsonToKvObject;
 
 /**
  * The resource for the relation features in the Orchestrate API.
@@ -87,7 +85,7 @@ public class RelationResource extends BaseResource {
                 "'destCollection' and 'destKey' not valid in GET query.");
         checkNoneEmpty(kinds, "kinds", "kind");
 
-        final String uri = client.uri(sourceCollection, sourceKey, "relations").concat("/"+client.encode(kinds));
+        final String uri = client.uri(sourceCollection, sourceKey, "relations").concat("/" + client.encode(kinds));
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -106,14 +104,13 @@ public class RelationResource extends BaseResource {
                     return null;
                 }
 
-                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
-                final JsonNode jsonNode = parseJson(json, mapper);
+                final JsonNode jsonNode = toJsonNode(response);
 
                 final int count = jsonNode.path("count").asInt();
                 final List<KvObject<T>> relatedObjects = new ArrayList<KvObject<T>>(count);
 
                 for (JsonNode node : jsonNode.path("results")) {
-                    relatedObjects.add(jsonToKvObject(mapper, node, clazz));
+                    relatedObjects.add(toKvObject(node, clazz));
                 }
 
                 return new RelationList<T>(relatedObjects);

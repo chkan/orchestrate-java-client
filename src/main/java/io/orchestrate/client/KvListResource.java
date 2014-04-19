@@ -21,12 +21,10 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -34,7 +32,6 @@ import java.util.List;
 import static io.orchestrate.client.Preconditions.checkArgument;
 import static io.orchestrate.client.Preconditions.checkNotNegative;
 import static io.orchestrate.client.Preconditions.checkNotNullOrEmpty;
-import static io.orchestrate.client.ResponseConverterUtil.jsonToKvObject;
 
 /**
  * The resource for the KV list features in the Orchestrate API.
@@ -84,14 +81,13 @@ public class KvListResource extends BaseResource {
     public <T> OrchestrateRequest<KvList<T>> get(final @NonNull Class<T> clazz) {
         checkArgument(!inclusive || startKey != null, "'inclusive' requires 'startKey' for request.");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection);
+        final String uri = client.uri(collection);
         String query = "limit=".concat(limit + "");
         if (startKey != null) {
             final String keyName = (inclusive) ? "startKey" : "afterKey";
             query = query
                     .concat('&' + keyName + '=')
-                    .concat(urlEncoder.encodeURL(startKey));
+                    .concat(client.encode(startKey));
         }
 
         final HttpContent packet = HttpRequestPacket.builder()
@@ -108,8 +104,7 @@ public class KvListResource extends BaseResource {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 assert (status == 200);
 
-                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
-                final JsonNode jsonNode = mapper.readTree(json);
+                final JsonNode jsonNode = toJsonNode(response);
 
                 final OrchestrateRequest<KvList<T>> next;
                 if (jsonNode.has("next")) {
@@ -131,7 +126,7 @@ public class KvListResource extends BaseResource {
 
                 final Iterator<JsonNode> iter = jsonNode.get("results").elements();
                 while (iter.hasNext()) {
-                    results.add(jsonToKvObject(mapper, iter.next(), clazz));
+                    results.add(toKvObject(iter.next(), clazz));
                 }
 
                 return new KvList<T>(results, count, next);

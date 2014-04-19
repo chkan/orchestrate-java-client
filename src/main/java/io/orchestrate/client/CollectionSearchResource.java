@@ -20,16 +20,13 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.http.HttpRequestPacket;
 import org.glassfish.grizzly.http.HttpResponsePacket;
 import org.glassfish.grizzly.http.Method;
-import org.glassfish.grizzly.http.util.UEncoder;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import static io.orchestrate.client.Preconditions.*;
-import static io.orchestrate.client.ResponseConverterUtil.jsonToKvObject;
 
 /**
  * The resource for the collection search features in the Orchestrate API.
@@ -82,14 +79,13 @@ public class CollectionSearchResource extends BaseResource {
         checkNotNull(clazz, "clazz");
         checkNotNullOrEmpty(luceneQuery, "luceneQuery");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String query = "query=".concat(urlEncoder.encodeURL(luceneQuery))
+        final String query = "query=".concat(client.encode(luceneQuery))
                 .concat("&limit=").concat(limit + "")
                 .concat("&offset=").concat(offset + "");
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
-                .uri(urlEncoder.encodeURL(collection))
+                .uri(client.uri(collection))
                 .query(query)
                 .build()
                 .httpContentBuilder()
@@ -101,8 +97,7 @@ public class CollectionSearchResource extends BaseResource {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 assert (status == 200);
 
-                final String json = response.getContent().toStringContent(Charset.forName("UTF-8"));
-                final JsonNode jsonNode = mapper.readTree(json);
+                final JsonNode jsonNode = toJsonNode(response);
 
                 final int totalCount = jsonNode.get("total_count").asInt();
                 final int count = jsonNode.get("count").asInt();
@@ -115,7 +110,7 @@ public class CollectionSearchResource extends BaseResource {
                     // parse result structure (e.g.):
                     // {"path":{...},"value":{},"score":1.0}
                     final double score = result.get("score").asDouble();
-                    final KvObject<T> kvObject = jsonToKvObject(mapper, result, clazz);
+                    final KvObject<T> kvObject = toKvObject(result, clazz);
 
                     results.add(new Result<T>(kvObject, score));
                 }

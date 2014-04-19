@@ -61,7 +61,7 @@ public final class OrchestrateRequest<T> implements Future<T> {
             public void completed(HttpContent result) {
                 try {
                     convertedResponseFuture.result(converter.from(result));
-                } catch (IOException e) {
+                } catch (Exception e) {
                     failed(e);
                 }
             }

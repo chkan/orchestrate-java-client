@@ -116,14 +116,10 @@ final class ClientFilter extends BaseFilter {
         final HttpPacket request = (HttpPacket) message;
         final HttpRequestPacket httpHeader = (HttpRequestPacket) request.getHttpHeader();
 
-        // add version information
-        final String uriWithPrefix = "/v0/".concat(httpHeader.getRequestURI());
-
         // adjust the HTTP request to include standard headers
         httpHeader.setProtocol(Protocol.HTTP_1_1);
         httpHeader.setHeader(Header.Host, host);
         httpHeader.setHeader(Header.UserAgent, userAgentValue);
-        httpHeader.setRequestURI(uriWithPrefix);
 
         // add basic auth information
         httpHeader.addHeader(Header.Authorization, authHeaderValue);

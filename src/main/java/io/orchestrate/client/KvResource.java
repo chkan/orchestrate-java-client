@@ -19,14 +19,11 @@ import lombok.NonNull;
 import org.glassfish.grizzly.http.*;
 import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
-import org.glassfish.grizzly.http.util.UEncoder;
-import org.glassfish.grizzly.impl.SafeFutureImpl;
 import org.glassfish.grizzly.memory.ByteBufferWrapper;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.Future;
 
 import static io.orchestrate.client.Preconditions.checkArgument;
 
@@ -89,10 +86,7 @@ public class KvResource extends BaseResource {
     public OrchestrateRequest<Boolean> delete(final boolean purge) {
         checkArgument(!ifAbsent, "'ifAbsent' cannot be used in a DELETE request.");
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(key));
+        final String uri = client.uri(collection, key);
 
         final HttpRequestPacket.Builder builder = HttpRequestPacket.builder()
                 .method(Method.DELETE)
@@ -140,13 +134,9 @@ public class KvResource extends BaseResource {
      * @return This KV resource.
      */
     public <T> OrchestrateRequest<KvObject<T>> get(final @NonNull Class<T> clazz, @Nullable final String ref) {
-        final UEncoder urlEncoder = new UEncoder();
-        String uri = urlEncoder.encodeURL(collection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(key));
-        if (ref != null) {
-            uri = uri.concat("/refs/").concat(ref);
-        }
+        final String uri = ref != null ?
+                client.uri(collection, key, "refs", ref) :
+                client.uri(collection, key);
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -166,17 +156,7 @@ public class KvResource extends BaseResource {
                     return null;
                 }
 
-                final String json = response.getContent().toStringContent();
-                final String ref  = header.getHeader(Header.ETag)
-                        .replace("\"", "")
-                        .replaceFirst("-gzip$", "");
-
-                @SuppressWarnings("unchecked")
-                final T value = (clazz == String.class)
-                        ? (T) json
-                        : mapper.readValue(json, clazz);
-
-                return new KvObject<T>(collection, key, ref, value, json);
+                return toKvObject(response, collection, key, clazz);
             }
         });
     }
@@ -236,19 +216,9 @@ public class KvResource extends BaseResource {
      * @return The prepared put request.
      */
     public OrchestrateRequest<KvMetadata> put(final @NonNull Object value) {
-        final byte[] content;
-        try {
-            content = (value instanceof String)
-                    ? ((String) value).getBytes("UTF-8")
-                    : mapper.writeValueAsBytes(value);
-        } catch (final Exception e) {
-            throw new RuntimeException(e); // FIXME
-        }
+        final byte[] content = toJsonBytes(value);
 
-        final UEncoder urlEncoder = new UEncoder();
-        final String uri = urlEncoder.encodeURL(collection)
-                .concat("/")
-                .concat(urlEncoder.encodeURL(key));
+        final String uri = client.uri(collection, key);
 
         final HttpRequestPacket.Builder httpHeaderBuilder = HttpRequestPacket.builder()
                 .method(Method.PUT)

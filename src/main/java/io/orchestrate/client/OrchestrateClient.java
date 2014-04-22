@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static io.orchestrate.client.Preconditions.checkArgument;
 import static io.orchestrate.client.Preconditions.checkNotNegative;
@@ -242,15 +243,33 @@ public class OrchestrateClient implements Client {
 
     /** {@inheritDoc} */
     @Override
-    public void ping(final String collection) throws IOException {
-        checkNotNullOrEmpty(collection, "collection");
+    public void ping() throws IOException {
+        final String uri = uri("");
 
-        // TODO replace this when Orchestrate has a health check REST endpoint
-        try {
-            this.listCollection(collection).limit(0).get(String.class).get();
-        } catch (final Throwable t) {
-            throw new IOException(t);
-        }
+        final HttpContent packet = HttpRequestPacket.builder()
+                .method(Method.HEAD)
+                .uri(uri)
+                .build()
+                .httpContentBuilder()
+                .build();
+
+        new OrchestrateRequest<Void>(this, packet, new ResponseConverter<Void>() {
+            @Override
+            public Void from(final HttpContent response) throws IOException {
+                final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
+                if (status != 200) {
+                    throw new IOException(response.getContent().toStringContent());
+                }
+                return null;
+            }
+        }).get(5000, TimeUnit.MILLISECONDS);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Deprecated
+    public void ping(final String collection) throws IOException {
+        this.ping();
     }
 
     /** {@inheritDoc} */

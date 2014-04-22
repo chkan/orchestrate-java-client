@@ -26,7 +26,7 @@ public final class ClientTest extends BaseClientTest {
 
     @Test
     public void pingCheck() throws IOException {
-        client.ping(collection());
+        client.ping();
     }
 
 }

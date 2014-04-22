@@ -74,9 +74,14 @@ public interface Client {
     /**
      * Health check that sends a ping to the Orchestrate service.
      *
-     * @param collection The name of collection to ping.
      * @throws IOException If the health check failed.
      */
+    public void ping() throws IOException;
+
+    /**
+     * @see #ping()
+     */
+    @Deprecated
     public void ping(final String collection) throws IOException;
 
     /**

@@ -19,7 +19,15 @@ package io.orchestrate.client;
  * An object that represents a failure to send a request from the {@code Client}.
  */
 @SuppressWarnings("serial")
-public final class ClientException extends RuntimeException {
+public class ClientException extends RuntimeException {
+
+    ClientException(final String message) {
+        super(message);
+    }
+
+    ClientException(final String message, final Throwable t) {
+        super(message, t);
+    }
 
     ClientException(final Throwable t) {
         super(t);

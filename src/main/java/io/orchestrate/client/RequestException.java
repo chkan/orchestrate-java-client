@@ -24,17 +24,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode(callSuper=false)
 @SuppressWarnings("serial")
-public final class RequestException extends RuntimeException {
+public class RequestException extends ClientException {
 
     /** The HTTP status code from the request. */
     private final int statusCode;
-    /** The HTTP content from the request. */
-    private final String message;
     /** The HTTP response ID from the request. */
     private final String requestId;
 
     RequestException(
             final int statusCode, final String message, final String requestId) {
+        super(message);
         assert (statusCode >= 0);
         assert (message != null);
         assert (message.length() >= 0);
@@ -42,7 +41,6 @@ public final class RequestException extends RuntimeException {
         assert (requestId.length() > 0);
 
         this.statusCode = statusCode;
-        this.message = message;
         this.requestId = requestId;
     }
 
@@ -53,16 +51,6 @@ public final class RequestException extends RuntimeException {
      */
     public int getStatusCode() {
         return statusCode;
-    }
-
-    /**
-     * Returns the HTTP content from the failed request.
-     *
-     * @return The HTTP content from the failed request.
-     */
-    @Override
-    public String getMessage() {
-        return message;
     }
 
     /**

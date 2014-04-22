@@ -258,7 +258,7 @@ public class OrchestrateClient implements Client {
             public Void from(final HttpContent response) throws IOException {
                 final int status = ((HttpResponsePacket) response.getHttpHeader()).getStatus();
                 if (status != 200) {
-                    throw new IOException(response.getContent().toStringContent());
+                    throw new IOException(String.format("Ping failed: %s", status));
                 }
                 return null;
             }

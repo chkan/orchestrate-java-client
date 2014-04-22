@@ -15,9 +15,17 @@
  */
 package io.orchestrate.client.itest;
 
+import io.orchestrate.client.ClientException;
+import io.orchestrate.client.OrchestrateClient;
+import io.orchestrate.client.RequestException;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * {@link io.orchestrate.client.OrchestrateClient#ping(String)}.
@@ -27,6 +35,19 @@ public final class ClientTest extends BaseClientTest {
     @Test
     public void pingCheck() throws IOException {
         client.ping();
+    }
+
+    @Test
+    public void pingWithInvalidKey() throws IOException {
+        String badKey = "12345678-1234-1234-1234-1234567890123";
+        client = OrchestrateClient.builder(badKey).build();
+        try {
+            client.ping();
+        } catch (ClientException ex) {
+            ExecutionException exex = (ExecutionException)ex.getCause();
+            RequestException rex = (RequestException) exex.getCause();
+            assertEquals(401, rex.getStatusCode());
+        }
     }
 
 }

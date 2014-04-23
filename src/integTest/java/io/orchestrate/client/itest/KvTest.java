@@ -145,6 +145,38 @@ public final class KvTest extends BaseClientTest {
     }
 
     @Theory
+    public void getKeyWithInvalidApiKey(@ForAll(sampleSize=2) final String key) throws InterruptedException {
+        assumeThat(key, not(isEmptyString()));
+
+        String badKey = "12345678-1234-1234-1234-1234567890123";
+        Client badClient = OrchestrateClient.builder(badKey).build();
+
+        final BlockingQueue<Throwable> failureQueue = DataStructures.getLTQInstance(Throwable.class);
+
+        try {
+            final KvObject<String> object =
+                badClient.kv(collection(), key)
+                    .get(String.class)
+                    .on(new ResponseListener<KvObject<String>>() {
+                        @Override
+                        public void onFailure(Throwable error) {
+                            failureQueue.add(error);
+                        }
+
+                        @Override
+                        public void onSuccess(KvObject<String> object) {
+                        }
+                    })
+                    .get();
+            fail("Should have thrown InvalidApiKeyException on 'get()'.");
+        } catch (InvalidApiKeyException ex) {
+        }
+        @SuppressWarnings("unchecked")
+        final Throwable failure = failureQueue.poll(5000, TimeUnit.MILLISECONDS);
+        assertTrue(failure instanceof InvalidApiKeyException);
+    }
+
+    @Theory
     public void getKeyAsync(@ForAll(sampleSize=10) final String key)
             throws InterruptedException {
         assumeThat(key, not(isEmptyString()));

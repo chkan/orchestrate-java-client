@@ -15,9 +15,14 @@
  */
 package io.orchestrate.client.itest;
 
+import io.orchestrate.client.Client;
+import io.orchestrate.client.InvalidApiKeyException;
+import io.orchestrate.client.OrchestrateClient;
 import org.junit.Test;
 
 import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * {@link io.orchestrate.client.OrchestrateClient#ping(String)}.
@@ -26,7 +31,14 @@ public final class ClientTest extends BaseClientTest {
 
     @Test
     public void pingCheck() throws IOException {
-        client.ping(collection());
+        client.ping();
+    }
+
+    @Test(expected=InvalidApiKeyException.class)
+    public void pingWithInvalidKey() throws IOException {
+        String badKey = "12345678-1234-1234-1234-1234567890123";
+        Client badClient = OrchestrateClient.builder(badKey).build();
+        badClient.ping();
     }
 
 }

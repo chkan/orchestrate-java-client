@@ -22,6 +22,7 @@ import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -105,11 +106,7 @@ public final class OrchestrateRequest<T> implements Future<T> {
 
     @Override
     public T get() {
-        try {
-            return get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            throw new ClientException(e);
-        }
+        return get(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -118,6 +115,13 @@ public final class OrchestrateRequest<T> implements Future<T> {
 
         try {
             return convertedResponseFuture.get(timeout, unit);
+        } catch (final ClientException ex) {
+            throw ex;
+        } catch (final ExecutionException ex) {
+            if (ex.getCause() instanceof ClientException) {
+                throw (ClientException) ex.getCause();
+            }
+            throw new ClientException(ex.getCause());
         } catch (final Exception e) {
             throw new ClientException(e);
         }

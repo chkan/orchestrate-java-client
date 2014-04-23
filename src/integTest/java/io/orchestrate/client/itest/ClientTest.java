@@ -34,15 +34,11 @@ public final class ClientTest extends BaseClientTest {
         client.ping();
     }
 
-    @Test
+    @Test(expected=InvalidApiKeyException.class)
     public void pingWithInvalidKey() throws IOException {
         String badKey = "12345678-1234-1234-1234-1234567890123";
         Client badClient = OrchestrateClient.builder(badKey).build();
-        try {
-            badClient.ping();
-        } catch (InvalidApiKeyException rex) {
-            assertEquals(401, rex.getStatusCode());
-        }
+        badClient.ping();
     }
 
 }

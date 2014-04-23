@@ -96,8 +96,13 @@ final class ClientFilter extends BaseFilter {
                 future.result(content);
             } else {
                 final String reqId = header.getHeader("x-orchestrate-req-id");
+                // TODO this is usually a json payload we could parse into an ClientError object
                 final String message = content.getContent().toStringContent();
-                future.failure(new RequestException(status, message, reqId));
+                if (status == 401) {
+                    future.failure(new InvalidApiKeyException(status, message, reqId));
+                } else {
+                    future.failure(new RequestException(status, message, reqId));
+                }
             }
         } catch (final Throwable t) {
             future.failure(t);

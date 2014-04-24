@@ -23,7 +23,7 @@ The client library is available on [Maven Central](http://search.maven.org/#sear
 
 ```groovy
 dependencies {
-    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.3.0'
+    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.3.1'
 }
 ```
 
@@ -33,15 +33,14 @@ dependencies {
 <dependency>
     <groupId>io.orchestrate</groupId>
     <artifactId>orchestrate-client</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 </dependency>
 ```
 
 ### Example
 
-The client API is designed around the concept of `operation`s you can execute on
- the Orchestrate.io service. The client library is entirely asynchronous and
- conforms to the [java.util.concurrent.Future](http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html)
+The client API is designed to mirror the Orchestrate REST API. The client library
+ is entirely asynchronous and conforms to the [java.util.concurrent.Future](http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html)
  specification in the standard library.
 
 #### Creating a Client

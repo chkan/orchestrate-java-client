@@ -21,9 +21,9 @@ import org.glassfish.grizzly.GrizzlyFuture;
 import org.glassfish.grizzly.http.HttpContent;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
 
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static io.orchestrate.client.Preconditions.checkNotNegative;
@@ -35,16 +35,29 @@ public final class OrchestrateRequest<T> implements Future<T> {
 
     private final SafeFutureImpl<HttpContent> rawResponseFuture;
     private final SafeFutureImpl<T> convertedResponseFuture;
+    private final OrchestrateClient client;
+    private final HttpContent httpRequest;
     private GrizzlyFuture activeRequest;
+    private final Semaphore sent = new Semaphore(1);
 
     OrchestrateRequest(
             final OrchestrateClient client,
             final HttpContent httpRequest,
             final ResponseConverter<T> converter) {
+        this(client, httpRequest, converter, true);
+    }
+
+    OrchestrateRequest(
+            final OrchestrateClient client,
+            final HttpContent httpRequest,
+            final ResponseConverter<T> converter,
+            final boolean sendImmediate) {
         assert (client != null);
         assert (httpRequest != null);
         assert (converter != null);
 
+        this.client = client;
+        this.httpRequest = httpRequest;
         rawResponseFuture = SafeFutureImpl.create();
         convertedResponseFuture = SafeFutureImpl.create();
         rawResponseFuture.addCompletionHandler(new CompletionHandler<HttpContent>() {
@@ -71,7 +84,10 @@ public final class OrchestrateRequest<T> implements Future<T> {
             public void updated(HttpContent result) {
             }
         });
-        client.execute(httpRequest, new ConnectionCompletionHandler(this, httpRequest));
+
+        if(sendImmediate) {
+            send();
+        }
     }
 
     public OrchestrateRequest<T> on(final @NonNull Iterable<ResponseListener<T>> listeners) {
@@ -84,6 +100,15 @@ public final class OrchestrateRequest<T> implements Future<T> {
     public OrchestrateRequest<T> on(final @NonNull ResponseListener<T> listener) {
         convertedResponseFuture.addCompletionHandler(new ResponseCompletionHandler<T>(listener));
         return this;
+    }
+
+    public OrchestrateRequest<T> getAsync() {
+        send();
+        return this;
+    }
+
+    public boolean hasSent() {
+        return sent.availablePermits() == 0;
     }
 
     @Override
@@ -112,6 +137,7 @@ public final class OrchestrateRequest<T> implements Future<T> {
     @Override
     public T get(long timeout, TimeUnit unit) {
         checkNotNegative(timeout, "timeout");
+        send();
 
         try {
             return convertedResponseFuture.get(timeout, unit);
@@ -124,6 +150,12 @@ public final class OrchestrateRequest<T> implements Future<T> {
             throw new ClientException(ex.getCause());
         } catch (final Exception e) {
             throw new ClientException(e);
+        }
+    }
+
+    private void send() {
+        if(sent.tryAcquire()) {
+            client.execute(httpRequest, new ConnectionCompletionHandler(this, httpRequest));
         }
     }
 

@@ -133,6 +133,7 @@ public final class KvListTest extends BaseClientTest {
         assertNotNull(kvObject1);
         assertTrue(kvList1.hasNext());
 
+        assertFalse(kvList1.getNext().hasSent());
         final KvList<String> kvList2 = kvList1.getNext().get();
         assertNotNull(kvList2);
         assertTrue(kvList2.iterator().hasNext());

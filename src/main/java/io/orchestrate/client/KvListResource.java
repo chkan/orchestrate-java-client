@@ -117,7 +117,7 @@ public class KvListResource extends BaseResource {
                             .build()
                             .httpContentBuilder()
                             .build();
-                    next = new OrchestrateRequest<KvList<T>>(client, packet, this);
+                    next = new OrchestrateRequest<KvList<T>>(client, packet, this, false);
                 } else {
                     next = null;
                 }

@@ -63,6 +63,7 @@ package io.orchestrate.client;
  * }
  * </pre>
  */
+@SuppressWarnings("serial")
 public class InvalidApiKeyException extends RequestException {
     InvalidApiKeyException(int statusCode, String message, String requestId) {
         super(statusCode, message, requestId);

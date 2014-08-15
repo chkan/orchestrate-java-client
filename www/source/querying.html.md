@@ -209,6 +209,18 @@ This type of store operation is very useful in high write concurrency
  environments, it provides a pre-condition that must be `true` for the store
  operation to succeed.
 
+#### <a name="server-generated-keys"></a> Store with Server-Generated Keys
+
+With some types of data you'll store to Orchestrate you may want to have the
+ service generate keys for the values for you. This is similar to using the
+ `AUTO_INCREMENT` feature from other databases.
+
+To store a value to a collection with a server-generated key:
+
+```java
+KvMetadata kvMetadata = client.postValue("someCollection", obj).get();
+```
+
 ### <a name="delete-data"></a> Delete Data
 
 To delete a `collection` of objects.

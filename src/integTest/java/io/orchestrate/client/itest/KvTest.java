@@ -19,11 +19,13 @@ import com.pholser.junit.quickcheck.ForAll;
 import io.orchestrate.client.*;
 import org.glassfish.grizzly.utils.DataStructures;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.contrib.theories.Theories;
 import org.junit.contrib.theories.Theory;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -594,6 +596,40 @@ public final class KvTest extends BaseClientTest {
         assertNotNull(kvMetadata2);
         assertEquals(collection, kvMetadata2.getCollection());
         assertEquals(key, kvMetadata2.getKey());
+    }
+
+    @Test
+    public void postValue() throws IOException {
+        final String collection = collection();
+        final KvMetadata kvMetadata = client.postValue(collection, "{}").get();
+
+        assertNotNull(kvMetadata);
+        assertNotNull(kvMetadata.getKey());
+        assertEquals(collection, kvMetadata.getCollection());
+    }
+
+    @Test
+    public void postValueAsync() throws InterruptedException, IOException {
+        final String collection = collection();
+
+        final BlockingQueue<KvMetadata> queue = DataStructures.getLTQInstance(KvMetadata.class);
+        client.postValue(collection, "{}")
+              .on(new ResponseAdapter<KvMetadata>() {
+                  @Override
+                  public void onFailure(final Throwable error) {
+                      fail(error.getMessage());
+                  }
+
+                  @Override
+                  public void onSuccess(final KvMetadata object) {
+                      queue.add(object);
+                  }
+              });
+        final KvMetadata kvMetadata = queue.poll(5000, TimeUnit.MILLISECONDS);
+
+        assertNotNull(kvMetadata);
+        assertNotNull(kvMetadata.getKey());
+        assertEquals(collection, kvMetadata.getCollection());
     }
 
 }

@@ -85,6 +85,26 @@ public interface Client {
     public void ping(final String collection) throws IOException;
 
     /**
+     * Store an object by value in the collection specified to the Orchestrate service
+     * which will auto-generate a key for it.
+     *
+     * <p>Usage:</p>
+     * <pre>
+     * {@code
+     * DomainObject obj = new DomainObject();
+     * KvMetadata kvMetadata =
+     *         client.postValue("someCollection", obj).get();
+     * }
+     * </pre>
+     *
+     * @param collection The name of the collection.
+     * @param value The object to store.
+     * @return The prepared put request.
+     * @throws IOException If the request failed.
+     */
+    public OrchestrateRequest<KvMetadata> postValue(final String collection, final Object value) throws IOException;
+
+    /**
      * The resource for the relation features in the Orchestrate API.
      *
      * @param collection The name of the collection.

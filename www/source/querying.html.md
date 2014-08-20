@@ -160,6 +160,17 @@ The `KvList` object returns a `next` field with a prepared request with the next
  group of objects (or `null` if there are no more objects), this can be used to
   paginate through the collection.
 
+It is also possible to retrieve a list of KV objects without their values by
+ setting the `withValues(boolean)` method as the request is being built.
+
+```java
+KvList<DomainObject> results =
+        client.listCollection("someCollection")
+              .withValues(Boolean.FALSE)
+              .get(DomainObject.class)
+              .get();
+```
+
 ### <a name="store-data"></a> Store Data
 
 To store an object from a `collection` to a given `key`.

@@ -243,6 +243,15 @@ public class OrchestrateClient implements Client {
 
     /** {@inheritDoc} */
     @Override
+    public KvRefListResource listRefs(String collection, String key) {
+        checkNotNullOrEmpty(collection, "collection");
+        checkNotNullOrEmpty(key, "key");
+
+        return new KvRefListResource(this, builder.mapper, collection, key);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public void ping() throws IOException {
         final String uri = uri("");
 

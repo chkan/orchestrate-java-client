@@ -72,6 +72,15 @@ public interface Client {
     public KvListResource listCollection(final String collection);
 
     /**
+     * The resource for the KV ref list feature in the Orchestrate API.
+     *
+     * @param collection The name of the collection.
+     * @param key The name of a key.
+     * @return The KV ref list resource.
+     */
+    public KvRefListResource listRefs(final String collection, final String key);
+
+    /**
      * Health check that sends a ping to the Orchestrate service.
      *
      * @throws IOException If the health check failed.

@@ -69,7 +69,7 @@ abstract class BaseResource {
                 .replace("\"", "")
                 .replaceFirst("-gzip$", "");
 
-        return ResponseConverterUtil.jsonToKvObject(mapper, valueNode, clazz, collection, key, ref);
+        return ResponseConverterUtil.jsonToKvObject(mapper, valueNode, clazz, collection, key, ref, false);
     }
 
     @SuppressWarnings("unchecked")

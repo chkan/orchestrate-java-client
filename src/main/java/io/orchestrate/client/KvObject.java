@@ -31,18 +31,29 @@ public class KvObject<T> extends KvMetadata {
     private final T value;
     /** The raw JSON value for this KV object. */
     private final String rawValue;
+    /** Marks whether this KV object is a tombstone. */
+    private final boolean tombstone;
 
     KvObject(final String collection, final String key, final String ref, final T value, final String rawValue) {
+        this(collection, key, ref, value, rawValue, false);
+    }
+
+    KvObject(final String collection, final String key, final String ref, final T value, final String rawValue, final boolean tombstone) {
         super(collection, key, ref);
         assert (value != null);
         assert (rawValue != null);
 
         this.value = value;
         this.rawValue = rawValue;
+        this.tombstone = tombstone;
     }
 
     KvObject(final KvMetadata metadata, final T value, final String rawValue) {
         this(metadata.getCollection(), metadata.getKey(), metadata.getRef(), value, rawValue);
+    }
+
+    KvObject(final KvMetadata metadata, final T value, final String rawValue, final boolean tombstone) {
+        this(metadata.getCollection(), metadata.getKey(), metadata.getRef(), value, rawValue, tombstone);
     }
 
     KvObject(final KvObject<T> kvObject) {
@@ -65,6 +76,15 @@ public class KvObject<T> extends KvMetadata {
      */
     public final String getRawValue() {
         return rawValue;
+    }
+
+    /**
+     *
+     *
+     * @return {@code true} if this KV object is a tombstone.
+     */
+    public final boolean isTombstone() {
+        return tombstone;
     }
 
 }

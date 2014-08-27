@@ -46,6 +46,8 @@ public class KvListResource extends BaseResource {
     private boolean inclusive;
     /** The number of KV objects to retrieve. */
     private int limit;
+    /** Whether to retrieve the values for the list of objects. */
+    private boolean withValues;
 
     KvListResource(final OrchestrateClient client,
                    final JacksonMapper mapper,
@@ -57,6 +59,7 @@ public class KvListResource extends BaseResource {
         this.collection = collection;
         this.inclusive = false;
         this.limit = 10;
+        this.withValues = true;
     }
 
     /**
@@ -82,7 +85,8 @@ public class KvListResource extends BaseResource {
         checkArgument(!inclusive || startKey != null, "'inclusive' requires 'startKey' for request.");
 
         final String uri = client.uri(collection);
-        String query = "limit=".concat(limit + "");
+        String query = "limit=".concat(Integer.toString(limit));
+        query = query.concat("&values=").concat(Boolean.toString(withValues));
         if (startKey != null) {
             final String keyName = (inclusive) ? "startKey" : "afterKey";
             query = query
@@ -185,6 +189,18 @@ public class KvListResource extends BaseResource {
     public KvListResource startKey(final String startKey) {
         this.startKey = checkNotNullOrEmpty(startKey, "startKey");
 
+        return this;
+    }
+
+    /**
+     * If {@code withValues} is {@code true} then the KV objects being listed
+     * will be retrieved with their values. Defaults to {@code true}.
+     *
+     * @param withValues The setting for whether to retrieve KV values.
+     * @return The KV list resource.
+     */
+    public KvListResource withValues(final boolean withValues) {
+        this.withValues = withValues;
         return this;
     }
 

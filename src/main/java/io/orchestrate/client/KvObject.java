@@ -34,8 +34,6 @@ public class KvObject<T> extends KvMetadata {
 
     KvObject(final String collection, final String key, final String ref, final T value, final String rawValue) {
         super(collection, key, ref);
-        assert (value != null);
-        assert (rawValue != null);
 
         this.value = value;
         this.rawValue = rawValue;
@@ -52,7 +50,7 @@ public class KvObject<T> extends KvMetadata {
     /**
      * Returns the value of this KV object.
      *
-     * @return The value of the KV object.
+     * @return The value of the KV object, may be {@code null}.
      */
     public final T getValue() {
         return value;
@@ -61,7 +59,7 @@ public class KvObject<T> extends KvMetadata {
     /**
      * Returns the raw JSON value of this KV object.
      *
-     * @return The raw JSON value of this KV object.
+     * @return The raw JSON value of this KV object, may be {@code null}.
      */
     public final String getRawValue() {
         return rawValue;

@@ -142,4 +142,29 @@ public final class KvListTest extends BaseClientTest {
         assertNotNull(kvObject2);
     }
 
+    @Test
+    public void getListWithoutValues() {
+        final String collection = collection();
+        final KvMetadata kvMetadata =
+                client.kv(collection, "key1")
+                        .put("{}")
+                        .get();
+
+        final KvList<String> kvList =
+                client.listCollection(collection)
+                      .withValues(false)
+                      .get(String.class)
+                      .get();
+
+        assertNotNull(kvMetadata);
+        assertNotNull(kvList);
+        assertTrue(kvList.iterator().hasNext());
+
+        final KvObject<String> kvObject = kvList.iterator().next();
+        assertEquals(collection, kvObject.getCollection());
+        assertEquals("key1", kvObject.getKey());
+        assertEquals(kvMetadata.getRef(), kvObject.getRef());
+        assertNull(kvObject.getValue());
+    }
+
 }

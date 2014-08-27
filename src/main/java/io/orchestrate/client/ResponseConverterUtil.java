@@ -47,20 +47,23 @@ final class ResponseConverterUtil {
         return jsonToKvObject(mapper, valueNode, clazz, collection, key, ref);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> KvObject<T> jsonToKvObject(ObjectMapper mapper, JsonNode valueNode, Class<T> clazz,
                                                  String collection, String key, String ref) throws IOException {
         assert (mapper != null);
-        assert (valueNode != null);
         assert (clazz != null);
 
         final KvMetadata metadata = new KvMetadata(collection, key, ref);
 
-        final String rawValue = mapper.writeValueAsString(valueNode);
+        String rawValue = null;
+        T value = null;
+        if (valueNode != null) {
+            rawValue = mapper.writeValueAsString(valueNode);
 
-        @SuppressWarnings("unchecked")
-        final T value = (clazz == String.class)
-                ? (T) rawValue
-                : valueNode.traverse(mapper).readValueAs(clazz);
+            value = (clazz == String.class)
+                    ? (T) rawValue
+                    : valueNode.traverse(mapper).readValueAs(clazz);
+        }
 
         // TODO Is there value in always having the raw string value available ON the KvObject?
         return new KvObject<T>(metadata, value, rawValue);

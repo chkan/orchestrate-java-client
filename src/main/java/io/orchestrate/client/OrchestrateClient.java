@@ -21,9 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.filterchain.FilterChainBuilder;
 import org.glassfish.grizzly.filterchain.TransportFilter;
 import org.glassfish.grizzly.http.*;
+import org.glassfish.grizzly.http.util.Header;
 import org.glassfish.grizzly.http.util.HttpStatus;
 import org.glassfish.grizzly.http.util.UEncoder;
 import org.glassfish.grizzly.impl.SafeFutureImpl;
+import org.glassfish.grizzly.memory.ByteBufferWrapper;
 import org.glassfish.grizzly.nio.NIOTransport;
 import org.glassfish.grizzly.nio.transport.TCPNIOTransportBuilder;
 import org.glassfish.grizzly.ssl.SSLContextConfigurator;
@@ -35,12 +37,12 @@ import org.glassfish.grizzly.threadpool.ThreadPoolConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static io.orchestrate.client.Preconditions.checkArgument;
-import static io.orchestrate.client.Preconditions.checkNotNegative;
-import static io.orchestrate.client.Preconditions.checkNotNullOrEmpty;
+import static io.orchestrate.client.Preconditions.*;
 
 /**
  * The client used to read and write data to the Orchestrate service.
@@ -270,6 +272,52 @@ public class OrchestrateClient implements Client {
     @Deprecated
     public void ping(final String collection) throws IOException {
         this.ping();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public OrchestrateRequest<KvMetadata> postValue(
+            final String collection, final Object value) throws IOException {
+        checkNotNullOrEmpty(collection, "collection");
+        checkNotNull(value, "value");
+
+        final byte[] content;
+        try {
+            content = (value instanceof String)
+                    ? ((String) value).getBytes(Charset.forName("UTF-8"))
+                    : builder.mapper.getMapper().writeValueAsBytes(value);
+        } catch (final Exception e) {
+            throw new RuntimeException(e); // FIXME
+        }
+
+        final String uri = this.uri(collection);
+
+        final HttpRequestPacket.Builder httpHeaderBuilder = HttpRequestPacket.builder()
+                .method(Method.POST)
+                .contentType("application/json")
+                .uri(uri)
+                .contentLength(content.length);
+
+        final HttpContent packet = httpHeaderBuilder.build()
+                .httpContentBuilder()
+                .content(new ByteBufferWrapper(ByteBuffer.wrap(content)))
+                .build();
+        return new OrchestrateRequest<KvMetadata>(this, packet, new ResponseConverter<KvMetadata>() {
+            @Override
+            public KvMetadata from(final HttpContent response) throws IOException {
+                final HttpHeader header = response.getHttpHeader();
+                final int status = ((HttpResponsePacket) header).getStatus();
+
+                if (status == 201) {
+                    final String key = header.getHeader(Header.Location).split("/")[2];
+                    final String ref = header.getHeader(Header.ETag)
+                            .replace("\"", "")
+                            .replace("-gzip", "");
+                    return new KvMetadata(collection, key, ref);
+                }
+                return null;
+            }
+        });
     }
 
     /** {@inheritDoc} */

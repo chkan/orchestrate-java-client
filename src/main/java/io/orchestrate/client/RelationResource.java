@@ -26,6 +26,7 @@ import org.glassfish.grizzly.http.Method;
 import org.glassfish.grizzly.http.util.HttpStatus;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,6 +47,10 @@ public class RelationResource extends BaseResource {
     private String destKey;
     /** Whether to swap the "source" and "destination" objects. */
     private boolean invert;
+    /** The number of graph results to retrieve. */
+    private int limit;
+    /** The offset to start graph results at. */
+    private int offset;
 
     RelationResource(final OrchestrateClient client,
             final JacksonMapper mapper,
@@ -57,6 +62,8 @@ public class RelationResource extends BaseResource {
 
         this.sourceCollection = sourceCollection;
         this.sourceKey = sourceKey;
+        this.limit = 10;
+        this.offset = 0;
     }
 
     /**
@@ -87,9 +94,13 @@ public class RelationResource extends BaseResource {
 
         final String uri = client.uri(sourceCollection, sourceKey, "relations").concat("/" + client.encode(kinds));
 
+        final String query = "limit=".concat(limit + "")
+                .concat("&offset=").concat(offset + "");
+
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
                 .uri(uri)
+                .query(query)
                 .build()
                 .httpContentBuilder()
                 .build();
@@ -106,6 +117,22 @@ public class RelationResource extends BaseResource {
 
                 final JsonNode jsonNode = toJsonNode(response);
 
+                final OrchestrateRequest<RelationList<T>> next;
+                if (jsonNode.has("next")) {
+                    final String page = jsonNode.get("next").asText();
+                    final URI url = URI.create(page);
+                    final HttpContent packet = HttpRequestPacket.builder()
+                            .method(Method.GET)
+                            .uri(uri)
+                            .query(url.getQuery())
+                            .build()
+                            .httpContentBuilder()
+                            .build();
+                    next = new OrchestrateRequest<RelationList<T>>(client, packet, this, false);
+                } else {
+                    next = null;
+                }
+
                 final int count = jsonNode.path("count").asInt();
                 final List<KvObject<T>> relatedObjects = new ArrayList<KvObject<T>>(count);
 
@@ -113,7 +140,7 @@ public class RelationResource extends BaseResource {
                     relatedObjects.add(toKvObject(node, clazz));
                 }
 
-                return new RelationList<T>(relatedObjects);
+                return new RelationList<T>(relatedObjects, next);
             }
         });
     }
@@ -253,6 +280,32 @@ public class RelationResource extends BaseResource {
      */
     public RelationResource invert(final boolean invert) {
         this.invert = invert;
+        return this;
+    }
+
+    /**
+     * The number of relation results to get in this query, this value cannot
+     * exceed 100. This property is ignored in {@code #put(...)} and {@code
+     * #purge(...)} requests.
+     *
+     * @param limit The number of search results in this query.
+     * @return This request.
+     */
+    public RelationResource limit(final int limit) {
+        this.limit = checkNotNegative(limit, "limit");
+        return this;
+    }
+
+    /**
+     * The position in the results list to start retrieving results from,
+     * this is useful for paginating results. This property is ignored in {@code
+     * #put(...)} and {@code #purge(...)} requests.
+     *
+     * @param offset The position to start retrieving results from.
+     * @return This request.
+     */
+    public RelationResource offset(final int offset) {
+        this.offset = checkNotNegative(offset, "offset");
         return this;
     }
 

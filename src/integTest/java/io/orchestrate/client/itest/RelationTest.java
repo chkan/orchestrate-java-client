@@ -354,4 +354,55 @@ public final class RelationTest extends BaseClientTest {
         assertFalse(check.iterator().hasNext());
     }
 
+    @Test
+    public void getResultsAndPaginate() {
+        final String collection = collection();
+        final String kind = "paginate";
+
+        final KvMetadata kvMetadata1 = client.kv(collection, "key1").put("{}").get();
+        final KvMetadata kvMetadata2 = client.kv(collection, "key2").put("{}").get();
+        final KvMetadata kvMetadata3 = client.kv(collection, "key3").put("{}").get();
+
+        final Boolean store1 =
+                client.relation(kvMetadata1.getCollection(), kvMetadata1.getKey())
+                        .to(kvMetadata2.getCollection(), kvMetadata2.getKey())
+                        .put(kind)
+                        .get();
+
+        final Boolean store2 =
+                client.relation(kvMetadata1.getCollection(), kvMetadata1.getKey())
+                        .to(kvMetadata3.getCollection(), kvMetadata3.getKey())
+                        .put(kind)
+                        .get();
+
+        final RelationList<String> results =
+                client.relation(kvMetadata1.getCollection(), kvMetadata1.getKey())
+                        .limit(1)
+                        .offset(0)
+                        .get(String.class, kind)
+                        .get();
+
+        System.out.println(results);
+        assertTrue(store1);
+        assertTrue(store2);
+        assertNotNull(kvMetadata1);
+        assertNotNull(kvMetadata2);
+        assertNotNull(kvMetadata3);
+        assertNotNull(results);
+        assertTrue(results.iterator().hasNext());
+
+        final KvObject<String> kvObject1 = results.iterator().next();
+        assertNotNull(kvObject1);
+        assertTrue(results.hasNext());
+
+        assertFalse(results.getNext().hasSent());
+        final RelationList<String> results2 = results.getNext().get();
+        System.out.println(results2);
+        assertNotNull(results2);
+        assertTrue(results2.iterator().hasNext());
+
+        final KvObject<String> kvObject2 = results2.iterator().next();
+        assertNotNull(kvObject2);
+    }
+
 }

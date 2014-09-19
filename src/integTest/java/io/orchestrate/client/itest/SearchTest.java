@@ -23,6 +23,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * {@link io.orchestrate.client.OrchestrateClient#searchCollection(String)}.
@@ -111,7 +112,7 @@ public final class SearchTest extends BaseClientTest {
         final KvMetadata kvMetadata1 = client.kv(collection, "key1").put("{}").get();
         final KvMetadata kvMetadata2 = client.kv(collection, "key2").put("{}").get();
         // give time for the write to hit the search index
-        Thread.sleep(1000);
+        Thread.sleep(3000);
 
         final SearchResults<String> results1 =
                 client.searchCollection(kvMetadata1.getCollection())
@@ -152,6 +153,35 @@ public final class SearchTest extends BaseClientTest {
         assertEquals(kvMetadata2.getKey(), kvObject2.getKey());
         assertEquals(kvMetadata2.getRef(), kvObject2.getRef());
         assertEquals("{}", kvObject2.getValue());
+    }
+
+    @Test
+    public void getSearchResultsWithoutValues() throws InterruptedException {
+        final String collection = collection();
+
+        final KvMetadata kvMetadata = client.kv(collection, "key1").put("{}").get();
+        // give time for the write to hit the search index
+        Thread.sleep(3000);
+
+        final SearchResults<String> results =
+                client.searchCollection(kvMetadata.getCollection())
+                        .withValues(false)
+                        .get(String.class, "*")
+                        .get();
+
+        assertNotNull(kvMetadata);
+        assertNotNull(results);
+        assertTrue(results.iterator().hasNext());
+
+        final Result<String> result = results.iterator().next();
+        assertNotNull(result);
+
+        final KvObject<String> kvObject = result.getKvObject();
+        assertNotNull(kvObject);
+        assertEquals(kvMetadata.getCollection(), kvObject.getCollection());
+        assertEquals(kvMetadata.getKey(), kvObject.getKey());
+        assertEquals(kvMetadata.getRef(), kvObject.getRef());
+        assertNull(kvObject.getValue());
     }
 
 }

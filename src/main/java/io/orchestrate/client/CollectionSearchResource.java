@@ -39,6 +39,8 @@ public class CollectionSearchResource extends BaseResource {
     private int limit;
     /** The offset to start search results at. */
     private int offset;
+    /** Whether to retrieve the values for the list of search results. */
+    private boolean withValues;
 
     CollectionSearchResource(
             final OrchestrateClient client,
@@ -51,6 +53,7 @@ public class CollectionSearchResource extends BaseResource {
         this.collection = collection;
         this.limit = 10;
         this.offset = 0;
+        this.withValues = true;
     }
 
     /**
@@ -81,7 +84,8 @@ public class CollectionSearchResource extends BaseResource {
 
         final String query = "query=".concat(client.encode(luceneQuery))
                 .concat("&limit=").concat(limit + "")
-                .concat("&offset=").concat(offset + "");
+                .concat("&offset=").concat(offset + "")
+                .concat("&values=").concat(Boolean.toString(withValues));
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -143,6 +147,18 @@ public class CollectionSearchResource extends BaseResource {
     public CollectionSearchResource offset(final int offset) {
         this.offset = checkNotNegative(offset, "offset");
 
+        return this;
+    }
+
+    /**
+     * If {@code withValues} is {@code true} then the KV objects in the search
+     * results will be retrieved with their values. Defaults to {@code true}.
+     *
+     * @param withValues The setting for whether to retrieve KV values.
+     * @return This request.
+     */
+    public CollectionSearchResource withValues(final boolean withValues) {
+        this.withValues = withValues;
         return this;
     }
 

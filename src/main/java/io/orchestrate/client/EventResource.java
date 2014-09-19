@@ -122,13 +122,14 @@ public class EventResource extends BaseResource {
                     final JsonNode result = iter.next();
 
                     final long timestamp = result.get("timestamp").asLong();
+                    final String ordinal = result.get("ordinal").asText();
 
                     final JsonNode valueNode = result.get("value");
                     final String rawValue = valueNode.toString();
 
                     final T value = toDomainObject(rawValue, clazz);
 
-                    events.add(new Event<T>(value, rawValue, timestamp));
+                    events.add(new Event<T>(value, rawValue, timestamp, ordinal));
                 }
                 return new EventList<T>(events);
             }

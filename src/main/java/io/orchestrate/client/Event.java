@@ -34,8 +34,10 @@ public class Event<T> {
     private final String rawValue;
     /** The timestamp of this event. */
     private final long timestamp;
+    /** The ordinal for the event. */
+    private final String ordinal;
 
-    Event(final T value, final String rawValue, final long timestamp) {
+    Event(final T value, final String rawValue, final long timestamp, final String ordinal) {
         assert (value != null);
         assert (rawValue != null);
         assert (timestamp >= 0);
@@ -43,6 +45,7 @@ public class Event<T> {
         this.value = value;
         this.rawValue = rawValue;
         this.timestamp = timestamp;
+        this.ordinal = ordinal;
     }
 
     /**
@@ -70,6 +73,15 @@ public class Event<T> {
      */
     public final long getTimestamp() {
         return timestamp;
+    }
+
+    /**
+     * Returns the ordinal of this event.
+     *
+     * @return The ordinal for this event.
+     */
+    public final String getOrdinal() {
+        return ordinal;
     }
 
 }

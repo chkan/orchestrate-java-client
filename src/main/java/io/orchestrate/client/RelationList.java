@@ -15,6 +15,7 @@
  */
 package io.orchestrate.client;
 
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,10 +26,14 @@ public class RelationList<T> implements Iterable<KvObject<T>> {
 
     private final List<KvObject<T>> relatedObjects;
 
-    RelationList(final List<KvObject<T>> relatedObjects) {
+    /** The next page of the results URL specified. */
+    private final OrchestrateRequest<RelationList<T>> next;
+
+    RelationList(final List<KvObject<T>> relatedObjects, @Nullable final OrchestrateRequest<RelationList<T>> next) {
         assert (relatedObjects != null);
 
         this.relatedObjects = relatedObjects;
+        this.next = next;
     }
 
     /**
@@ -38,6 +43,25 @@ public class RelationList<T> implements Iterable<KvObject<T>> {
      */
     public final Iterable<KvObject<T>> getRelatedObjects() {
         return relatedObjects;
+    }
+
+    /**
+     * The URL for the next page of the KV objects.
+     *
+     * @return The URL of the next page of KV objects.
+     */
+    @Nullable
+    public final OrchestrateRequest<RelationList<T>> getNext() {
+        return next;
+    }
+
+    /**
+     * Whether there is a URL for the next page of the graph results.
+     *
+     * @return The URL of the next page of graph results.
+     */
+    public final boolean hasNext() {
+        return (next != null);
     }
 
     /** {@inheritDoc} */

@@ -66,7 +66,7 @@ The Orchestrate Java Client is available on
 ```groovy
 dependencies {
     compile(
-[group: 'io.orchestrate', name: 'orchestrate-client', version: '0.3.2']
+[group: 'io.orchestrate', name: 'orchestrate-client', version: '0.4.0']
     )
 }
 ```
@@ -77,7 +77,7 @@ dependencies {
 <dependency>
     <groupId>io.orchestrate</groupId>
     <artifactId>orchestrate-client</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
 </dependency>
 ```
 
@@ -118,6 +118,7 @@ The javadoc for the latest version of the client is available at:
 
 For older versions of the documentation:
 
+* [0.4.0](http://java.orchestrate.io/javadoc/0.4.0/)
 * [0.3.2](http://java.orchestrate.io/javadoc/0.3.2/)
 * [0.3.1](http://java.orchestrate.io/javadoc/0.3.1/)
 * [0.3.0](http://java.orchestrate.io/javadoc/0.3.0/)

@@ -23,7 +23,7 @@ The client library is available on [Maven Central](http://search.maven.org/#sear
 
 ```groovy
 dependencies {
-    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.3.2'
+    compile group: 'io.orchestrate', name: 'orchestrate-client', version: '0.4.0'
 }
 ```
 

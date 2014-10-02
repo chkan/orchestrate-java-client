@@ -184,4 +184,38 @@ public final class SearchTest extends BaseClientTest {
         assertNull(kvObject.getValue());
     }
 
+    @Test
+    public void getSearchResultsSorted() throws InterruptedException {
+        final String collection = collection();
+
+        final KvMetadata kvMetadata1 = client.kv(collection, "key1")
+                .put("{'name': {'first': 'Jacob', 'last': 'Grimm'}}".replace('\'', '"'))
+                .get();
+        final KvMetadata kvMetadata2 = client.kv(collection, "key2")
+                .put("{'name': {'first': 'Wilhelm', 'last': 'Grimm'}}".replace('\'', '"'))
+                .get();
+        // give time for the write to hit the search index
+        Thread.sleep(3000);
+
+        final SearchResults<String> results =
+                client.searchCollection(kvMetadata1.getCollection())
+                        .sort("value.name.last:asc,value.name.first:asc")
+                        .get(String.class, "value.name.last: Grimm")
+                        .get();
+
+        assertNotNull(kvMetadata1);
+        assertNotNull(kvMetadata2);
+        assertNotNull(results);
+        assertTrue(results.iterator().hasNext());
+        System.out.println(results);
+
+        final Result<String> result = results.iterator().next();
+        assertNotNull(result);
+
+        final KvObject<String> kvObject = result.getKvObject();
+        assertNotNull(kvObject);
+        System.out.println(kvObject.getValue());
+        assertTrue(kvObject.getValue().contains("Jacob"));
+    }
+
 }

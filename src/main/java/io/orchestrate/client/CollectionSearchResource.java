@@ -123,9 +123,12 @@ public class CollectionSearchResource extends BaseResource {
                     final double score = (result.get("score") != null)
                             ? result.get("score").asDouble(0)
                             : 0.0;
+                    final Double distance = (result.get("distance") != null)
+                            ? result.get("distance").asDouble(0)
+                            : null;
                     final KvObject<T> kvObject = toKvObject(result, clazz);
 
-                    results.add(new Result<T>(kvObject, score));
+                    results.add(new Result<T>(kvObject, score, distance));
                 }
 
                 return new SearchResults<T>(results, totalCount);

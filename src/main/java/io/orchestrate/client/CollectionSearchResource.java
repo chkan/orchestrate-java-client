@@ -41,6 +41,8 @@ public class CollectionSearchResource extends BaseResource {
     private int offset;
     /** Whether to retrieve the values for the list of search results. */
     private boolean withValues;
+    /** The fully-qualified names of fields to sort upon. */
+    private String sortFields;
 
     CollectionSearchResource(
             final OrchestrateClient client,
@@ -54,6 +56,7 @@ public class CollectionSearchResource extends BaseResource {
         this.limit = 10;
         this.offset = 0;
         this.withValues = true;
+        this.sortFields = null;
     }
 
     /**
@@ -67,6 +70,7 @@ public class CollectionSearchResource extends BaseResource {
      *         client.searchCollection("someCollection")
      *               .limit(10)
      *               .offset(0)
+     *               .sort("value.name.last:asc")
      *               .get(String.class, luceneQuery)
      *               .get();
      * }
@@ -82,10 +86,13 @@ public class CollectionSearchResource extends BaseResource {
         checkNotNull(clazz, "clazz");
         checkNotNullOrEmpty(luceneQuery, "luceneQuery");
 
-        final String query = "query=".concat(client.encode(luceneQuery))
+        String query = "query=".concat(client.encode(luceneQuery))
                 .concat("&limit=").concat(limit + "")
                 .concat("&offset=").concat(offset + "")
                 .concat("&values=").concat(Boolean.toString(withValues));
+        if (sortFields != null) {
+            query = query.concat("&sort=").concat(sortFields);
+        }
 
         final HttpContent packet = HttpRequestPacket.builder()
                 .method(Method.GET)
@@ -113,7 +120,9 @@ public class CollectionSearchResource extends BaseResource {
 
                     // parse result structure (e.g.):
                     // {"path":{...},"value":{},"score":1.0}
-                    final double score = result.get("score").asDouble();
+                    final double score = (result.get("score") != null)
+                            ? result.get("score").asDouble(0)
+                            : 0.0;
                     final KvObject<T> kvObject = toKvObject(result, clazz);
 
                     results.add(new Result<T>(kvObject, score));
@@ -133,7 +142,6 @@ public class CollectionSearchResource extends BaseResource {
      */
     public CollectionSearchResource limit(final int limit) {
         this.limit = checkNotNegative(limit, "limit");
-
         return this;
     }
 
@@ -146,7 +154,29 @@ public class CollectionSearchResource extends BaseResource {
      */
     public CollectionSearchResource offset(final int offset) {
         this.offset = checkNotNegative(offset, "offset");
+        return this;
+    }
 
+    /**
+     * Apply sorting to the results in the search query, this will render the
+     * relevancy value in the "score" field for the results to be "0.0". To
+     * specify multiple sort-field names use "," to separate names, in which
+     * case the secondary fields will be used as tie-breakers.
+     *
+     * <p>
+     * {@code
+     * client.searchCollection("someCollection")
+     *     .sort("value.name.last:asc,value.name.first:asc")
+     *     .get(String.class, "*")
+     *     .get()
+     * }
+     * </p>
+     *
+     * @param sortFields The comma separated field names to sort by.
+     * @return This request.
+     */
+    public CollectionSearchResource sort(final String sortFields) {
+        this.sortFields = checkNotNull(sortFields, "sortFields");
         return this;
     }
 

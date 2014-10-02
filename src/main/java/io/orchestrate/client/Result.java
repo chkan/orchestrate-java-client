@@ -18,6 +18,8 @@ package io.orchestrate.client;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import javax.annotation.Nullable;
+
 /**
  * A container for the search result and its associated KV data.
  *

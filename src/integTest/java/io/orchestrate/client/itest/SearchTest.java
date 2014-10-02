@@ -207,15 +207,40 @@ public final class SearchTest extends BaseClientTest {
         assertNotNull(kvMetadata2);
         assertNotNull(results);
         assertTrue(results.iterator().hasNext());
-        System.out.println(results);
 
         final Result<String> result = results.iterator().next();
         assertNotNull(result);
 
         final KvObject<String> kvObject = result.getKvObject();
         assertNotNull(kvObject);
-        System.out.println(kvObject.getValue());
         assertTrue(kvObject.getValue().contains("Jacob"));
+    }
+
+    @Test
+    public void getSearchResultsFromGeoQuery() throws InterruptedException {
+        final String collection = collection();
+
+        final KvMetadata kvMetadata = client.kv(collection, "key1")
+                .put("{'location': {'lat': 1, 'lon': 1}}".replace('\'', '"'))
+                .get();
+        // give time for the write to hit the search index
+        Thread.sleep(3000);
+
+        final SearchResults<String> results =
+                client.searchCollection(kvMetadata.getCollection())
+                        .sort("value.location:distance:asc")
+                        .get(String.class, "value.location:NEAR:{lat:1 lon:1 dist:1km}")
+                        .get();
+
+        assertNotNull(kvMetadata);
+        assertNotNull(results);
+        assertTrue(results.iterator().hasNext());
+
+        final Result<String> result = results.iterator().next();
+        assertNotNull(result);
+        final KvObject<String> kvObject = result.getKvObject();
+        assertNotNull(kvObject);
+        assertTrue(kvObject.getValue().contains("distance"));
     }
 
 }

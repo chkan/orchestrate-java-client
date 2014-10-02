@@ -34,13 +34,16 @@ public class Result<T> {
     private final KvObject<T> kvObject;
     /** The score for this result. */
     private final double score;
+    /** The distance of a result, present in geospatial queries. */
+    private final Double distance;
 
-    Result(final KvObject<T> kvObject, final double score) {
+    Result(final KvObject<T> kvObject, final double score, final Double distance) {
         assert (kvObject != null);
         assert (score >= 0);
 
         this.kvObject = kvObject;
         this.score = score;
+        this.distance = distance;
     }
 
     /**
@@ -59,6 +62,19 @@ public class Result<T> {
      */
     public final double getScore() {
         return score;
+    }
+
+    /**
+     * The distance from the geo coordinate in the query of this search result.
+     * The units of value for this data are the same as the units used in the
+     * query. This value will only be present when a sort on distance is
+     * combined with the geospatial query.
+     *
+     * @return The distance for this result.
+     */
+    @Nullable
+    public final Double getDistance() {
+        return distance;
     }
 
 }

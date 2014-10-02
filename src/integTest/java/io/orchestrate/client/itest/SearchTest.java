@@ -240,7 +240,8 @@ public final class SearchTest extends BaseClientTest {
         assertNotNull(result);
         final KvObject<String> kvObject = result.getKvObject();
         assertNotNull(kvObject);
-        assertTrue(kvObject.getValue().contains("distance"));
+        System.out.println(result);
+        assertEquals(new Double(0), result.getDistance());
     }
 
 }

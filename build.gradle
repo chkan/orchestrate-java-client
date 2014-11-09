@@ -1,5 +1,4 @@
-/**
- * A high performance, asynchronous Java client to query the Orchestrate.io platform.
+/** * A high performance, asynchronous Java client to query the Orchestrate.io platform.
  */
 
 apply plugin: 'groovy'
@@ -15,10 +14,10 @@ def groovyVersion = 'groovy-2.1.8'
 def isReleaseVersion = !version.endsWith('SNAPSHOT')
 
 plugins.withType(JavaPlugin) {
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
 
-    tasks.withType(Compile).all {
+    tasks.withType(JavaCompile).all {
         // enable all warnings as errors
         options.compilerArgs = [
             '-Xlint:cast,deprecation,divzero,empty,unchecked,fallthrough,path,serial,finally,overrides,-options',
@@ -229,5 +228,5 @@ idea {
 }
 
 eclipse {
-    classpath { plusConfigurations += configurations.provided }
+    classpath { plusConfigurations += [configurations.provided] }
 }
